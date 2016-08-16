@@ -1,0 +1,19 @@
+{
+    "name": "zdorovo/micro",
+    "type": "library",
+    "description": "Micro PHP framework",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexei Perevoshchikov",
+            "email": "zdorovoveselo@gmail.com"
+        }
+    ],
+
+    "autoload": {
+        "psr-4": {
+            "Micro\\": "Micro/"
+        }
+    }
+
+}
