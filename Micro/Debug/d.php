@@ -42,8 +42,3 @@ class d
 		++$int;
 	}
 }
-phpinfo();
-phpinfo();
-phpinfo();
-phpinfo();
-phpinfo();

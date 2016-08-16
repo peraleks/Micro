@@ -22,7 +22,7 @@ class Router
     {
         // $this->url_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $Router = $this;
-        require_once __DIR__.'/../../../../app/routes.php';
+        require_once __DIR__.'/../../../../../app/routes.php';
     }
 
     public function add($url_route, $action)
