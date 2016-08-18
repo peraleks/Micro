@@ -22,7 +22,18 @@ class Router
     {
         // $this->url_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $Router = $this;
-        require_once __DIR__.'/../../../../../app/routes.php';
+        // require_once __DIR__.'/../../app/routes.php';
+        $Router->add('/{id}/blog', 'BlogController@index')
+        ->method('POST | GET');
+
+        $Router->add('/гоша/жопа/{id}', 'BlogController@index')
+        ->method('POST | GET');
+
+        $Router->add('/blog/articles/{id}/blog/{category}/{id}', 'BlogController@index');
+
+        $Router->add('/', 'BlogController@index')
+        ->method('GET');
+
     }
 
     public function add($url_route, $action)

@@ -14,7 +14,7 @@ class Request
     {
         $this->url_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $this->routes = $router->getRoutes();
-        \d::p($this->routes);
+        // \d::p($this->routes);
         // echo urldecode($this->url_path);
     }
 
