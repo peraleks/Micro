@@ -5,9 +5,11 @@ class Router
 {
     private static $instance;
 
-    public $routes = array(
-        'count' => 0,
-        );
+    private $routes = [];
+
+    private $groups = [];
+
+    private $link;
 
     public static function instance()
     {
@@ -18,56 +20,82 @@ class Router
         return self::$instance;
     }
 
-    private function __construct()
-    {
-        // $this->url_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    private function __construct() {}
+
+    public function init(array $arr) {
         $Router = $this;
-        // require_once __DIR__.'/../../app/routes.php';
-        $Router->add('/{id}/blog', 'BlogController@index')
-        ->method('POST | GET');
-
-        $Router->add('/гоша/жопа/{id}', 'BlogController@index')
-        ->method('POST | GET');
-
-        $Router->add('/blog/articles/{id}/blog/{category}/{id}', 'BlogController@index');
-
-        $Router->add('/', 'BlogController@index')
-        ->method('GET');
-
+        foreach ($arr as $value) {
+            include $value;
+        }
     }
 
-    public function add($url_route, $action)
-    {
-        $arr['url_route'] = $url_route;
+    public function group($url = '') {
+        $this->link = &$this->groups;
+        $this->link[] = ['urlGroup' => $url];
+        return $this;
+    }
 
-        $arr['split'] = preg_split('#/#', $url_route, -1, PREG_SPLIT_NO_EMPTY);
+    public function groupEnd() {
+        $this->link = &$this->groups;
+        array_pop($this->link);
+        return $this;
+    }
+
+    public function route($urlRoute, $action)
+    {
+
+        $arr['urlRoute'] = '';
+
+        $url = '';
+        if (!empty($this->groups)) {
+
+            for ($i = 0; $i < count($this->groups); $i++) {
+               $url .= $this->groups[$i]['urlGroup'];
+            }
+            $arr['urlRoute'] = $url;
+
+            for ($i = count($this->groups) -1; $i >= 0; $i--) {
+                if (isset($this->groups[$i]['method'])) {
+                    $arr['method'] = $this->groups[$i]['method'];
+                    break;
+                }
+            }
+        }
+
+        $arr['urlRoute'] .= $urlRoute;
+
+        $arr['urlRoute'] == '/' ?: $arr['urlRoute'] = rtrim($arr['urlRoute'], '/');
+
+        $splitUrl = preg_split('#/#', $arr['urlRoute'], -1, PREG_SPLIT_NO_EMPTY);
 
         $arr['action'] = preg_split('/@/', $action, -1, PREG_SPLIT_NO_EMPTY);
 
-        $arr['method'] = 'GET';
+        isset($arr['method']) ?: $arr['method'] = 'GET';
 
-        $arr['regx_route'] = '#^';
+        $arr['regxRoute'] = '#^';
 
-        for ($i = 0; $i < count($arr['split']); ++$i) {
-            if (preg_match('/^{\w+}$/', $arr['split'][$i])) {
-                $arr['regx_route'] .= '/\w+';
-                $arr['params'][$i] = trim($arr['split'][$i], '{}');
+        $this->link = &$this->routes['simple'];
+
+        for ($i = 0; $i < count($splitUrl); ++$i) {
+            if (preg_match('/^{\w+}$/', $splitUrl[$i])) {
+                $this->link = &$this->routes['regx'];
+                $arr['regxRoute'] .= '/\w+';
+                $arr['params'][$i] = trim($splitUrl[$i], '{}');
             } else {
-                $arr['regx_route'] .= '/'.$arr['split'][$i];
+                $arr['regxRoute'] .= '/'.$splitUrl[$i];
             }
         }
-        $arr['regx_route'] .= '(/|)$#';
+        $arr['regxRoute'] .= '(/|)$#';
 
-        $this->routes[] = $arr;
-
-        ++$this->routes['count'];
+        $this->link[$arr['urlRoute']] = $arr;
 
         return $this;
     }
 
     public function method($method)
     {
-        $this->routes[$this->routes['count'] - 1]['method'] = $method;
+        end($this->link);
+        $this->link[key($this->link)]['method'] = $method;
 
         return $this;
     }
