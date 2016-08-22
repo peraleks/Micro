@@ -9,13 +9,17 @@ class Router
 
     private $groups = [];
 
+    private $simple = [];
+
+    private $regx = [];
+
+    private $name = [];
+
     private $link;
 
     public static function instance()
     {
-        if (self::$instance == null) {
-            self::$instance = new self();
-        }
+        self::$instance ?: self::$instance = new self;
 
         return self::$instance;
     }
@@ -29,74 +33,84 @@ class Router
         }
     }
 
-    public function group($url = '') {
+    public function group($route = '') {
         $this->link = &$this->groups;
-        $this->link[] = ['urlGroup' => $url];
+        $this->groups[] = ['routeGroup' => $route];
         return $this;
     }
 
     public function groupEnd() {
         $this->link = &$this->groups;
-        array_pop($this->link);
+        array_pop($this->groups);
         return $this;
     }
 
-    public function route($urlRoute, $action)
+    public function route($route, $controller)
     {
-
-        $arr['urlRoute'] = '';
-
-        $url = '';
+        $arr['route']  = '';
         if (!empty($this->groups)) {
-
             for ($i = 0; $i < count($this->groups); $i++) {
-               $url .= $this->groups[$i]['urlGroup'];
+               $arr['route'] .= $this->groups[$i]['routeGroup'];
             }
-            $arr['urlRoute'] = $url;
+        }
+        $arr['route']  .= $route;
 
-            for ($i = count($this->groups) -1; $i >= 0; $i--) {
-                if (isset($this->groups[$i]['method'])) {
-                    $arr['method'] = $this->groups[$i]['method'];
-                    break;
+        if (!strpos($arr['route'], '{')) {
+            $arr['type'] = 'simple';
+        }
+        else {
+            $arr['type'] = 'regx';
+            $arr['route'] = rtrim($arr['route'], '/');
+            $parts = preg_split('#/#', $arr['route'], -1, PREG_SPLIT_NO_EMPTY);
+
+            $arr['mask'] = '#^';
+            for ($i = 0; $i < count($parts); ++$i) {
+                if (preg_match('/^{\w+}$/', $parts[$i])) {
+                    $arr['mask'] .= '/\w+';
+                    $arr['params'][$i] = trim($parts[$i], '{}');
+                } else {
+                    $arr['mask'] .= '/'.$parts[$i];
                 }
             }
+            $arr['mask'] .= '$#';
         }
-
-        $arr['urlRoute'] .= $urlRoute;
-
-        $arr['urlRoute'] == '/' ?: $arr['urlRoute'] = rtrim($arr['urlRoute'], '/');
-
-        $splitUrl = preg_split('#/#', $arr['urlRoute'], -1, PREG_SPLIT_NO_EMPTY);
-
-        $arr['action'] = preg_split('/@/', $action, -1, PREG_SPLIT_NO_EMPTY);
-
-        isset($arr['method']) ?: $arr['method'] = 'GET';
-
-        $arr['regxRoute'] = '#^';
-
-        $this->link = &$this->routes['simple'];
-
-        for ($i = 0; $i < count($splitUrl); ++$i) {
-            if (preg_match('/^{\w+}$/', $splitUrl[$i])) {
-                $this->link = &$this->routes['regx'];
-                $arr['regxRoute'] .= '/\w+';
-                $arr['params'][$i] = trim($splitUrl[$i], '{}');
-            } else {
-                $arr['regxRoute'] .= '/'.$splitUrl[$i];
-            }
-        }
-        $arr['regxRoute'] .= '(/|)$#';
-
-        $this->link[$arr['urlRoute']] = $arr;
+        $arr['controller'] = $controller;
+        $this->routes[$arr['route']] = $arr;
+        end($this->routes);
 
         return $this;
     }
 
-    public function method($method)
-    {
-        end($this->link);
-        $this->link[key($this->link)]['method'] = $method;
+    public function get($action, $controller = null) {
+        $this->method('GET', $action, $controller);
 
+        return $this;
+    }
+
+    public function post($action, $controller = null) {
+        $this->method('POST', $action, $controller);
+
+        return $this;
+    }
+
+    private function method($method, $action, $controller = null) {
+        $key = key($this->routes);
+        $this->routes[$key][$method]['action'] = $action;
+
+        $controller ?
+        $this->routes[$key][$method]['controller'] = $controller :
+        $this->routes[$key][$method]['controller'] = &$this->routes[$key]['controller'];
+
+        $type = $this->routes[$key]['type'];
+        $this->$type[$method][$key] = &$this->routes[$key];
+    }
+
+
+    public function name($name) {
+        $key = key($this->routes);
+        if ($this->routes[$key]['type'] == 'simple') {
+            $this->name[$name] = &$this->routes[$key];
+        }
         return $this;
     }
 
