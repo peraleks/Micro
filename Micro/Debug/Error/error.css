@@ -1,0 +1,69 @@
+div.error_handler div.header {
+	font-size: 110%;
+	font-weight: 900;
+	padding: 5px;
+	color: #fff;
+	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 2px rgb(0, 0, 0);
+	border-radius: 5px 5px 0 0;
+}
+
+div.error_handler .WARNING, .USER_WARNING, .CORE_WARNING, .COMPILE_WARNING
+{
+	background-color: ffaa00;
+}
+
+div.error_handler .ERROR, .CORE_ERROR, .COMPILE_ERROR, .USER_ERROR, .RECOVERABLE_ERROR
+{
+	background-color: ff0000;
+}
+
+div.error_handler .PARSE
+{
+	background-color: fa00ff;
+}
+
+div.error_handler .NOTICE, .USER_NOTICE
+{
+	background-color: ffff99;
+	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9), 0 0 2px rgb(0, 0, 0) !important;
+}
+
+div.error_handler .STRICT
+{
+	background-color: c3c1ff;
+}
+
+div.error_handler .DEPRECATED, .USER_DEPRECATED
+{
+	background-color: c48c00;
+}
+
+
+
+.error_handler {
+	font-size: 120%;
+	font-family: monospace;
+	margin: 10px 0;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	box-shadow: 5px 5px 10px 2px rgba(0, 0, 0, 0.1)
+}
+
+div.error_handler div.content {
+	padding: 8px;
+}
+
+div.error_handler div.error_path {
+	// font-weight: 900;
+	font-size: 120%;
+	background-color: #ddd;
+	text-shadow: 2px 2px 7px rgba(255, 255, 255, 0.9), 0 0 2px rgb(255, 255, 255);
+	border-radius: 0 0 5px 5px;
+}
+
+div.error_handler div.error_text {
+	font-family: sans-serif;
+	background-color: #aaa;
+	color: #fff;
+	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 2px rgb(0, 0, 0);
+}

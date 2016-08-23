@@ -15,7 +15,11 @@ class Router
 
     private $name = [];
 
+    private $safeMode = true;
+
     private $link;
+
+
 
     public static function instance()
     {
@@ -33,15 +37,23 @@ class Router
         }
     }
 
+    public function safeMode($bool = true) {
+        $this->safeMode = $bool;
+
+        return $this;
+    }
+
     public function group($route = '') {
         $this->link = &$this->groups;
         $this->groups[] = ['routeGroup' => $route];
+
         return $this;
     }
 
     public function groupEnd() {
         $this->link = &$this->groups;
         array_pop($this->groups);
+
         return $this;
     }
 
@@ -109,7 +121,15 @@ class Router
     public function name($name) {
         $key = key($this->routes);
         if ($this->routes[$key]['type'] == 'simple') {
+            if ($this->safeMode) {
+                if (array_key_exists($name, $this->name)) {
+                    new RouteException("Дублирование имени машрута '$name'");
+                }
+            } 
             $this->name[$name] = &$this->routes[$key];
+        } 
+        else {
+            new RouteException("Именовать можно только маршруты без параметров ('$name')");
         }
         return $this;
     }
