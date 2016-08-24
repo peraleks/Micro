@@ -11,7 +11,7 @@ class Router
 
     private $simple = [];
 
-    private $regx   = [];
+    private $regex   = [];
 
     private $name   = [];
 
