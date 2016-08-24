@@ -11,9 +11,9 @@ class Router
 
     private $simple = [];
 
-    private $regx = [];
+    private $regx   = [];
 
-    private $name = [];
+    private $name   = [];
 
     private $safeMode = true;
 
@@ -71,7 +71,7 @@ class Router
             $arr['type'] = 'simple';
         }
         else {
-            $arr['type'] = 'regx';
+            $arr['type'] = 'regex';
             $arr['route'] = rtrim($arr['route'], '/');
             $parts = preg_split('#/#', $arr['route'], -1, PREG_SPLIT_NO_EMPTY);
 
@@ -129,7 +129,7 @@ class Router
             $this->name[$name] = &$this->routes[$key];
         } 
         else {
-            new RouteException("Именовать можно только маршруты без параметров ('$name')");
+            new RouteException("Имя маршрута '$name' не было присвоено маршруту с параметрами");
         }
         return $this;
     }

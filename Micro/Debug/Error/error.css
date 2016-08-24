@@ -1,18 +1,18 @@
 div.error_handler div.header {
 	font-size: 110%;
-	font-weight: 900;
+	font-weight: 500;
 	padding: 5px;
 	color: #fff;
-	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 2px rgb(0, 0, 0);
 	border-radius: 5px 5px 0 0;
 }
 
-div.error_handler .WARNING, .USER_WARNING, .CORE_WARNING, .COMPILE_WARNING
+div.error_handler div.WARNING, div.USER_WARNING, div.CORE_WARNING, div.COMPILE_WARNING
 {
 	background-color: ffaa00;
 }
 
-div.error_handler .ERROR, .CORE_ERROR, .COMPILE_ERROR, .USER_ERROR, .RECOVERABLE_ERROR
+div.error_handler div.ERROR, div.CORE_ERROR, div.COMPILE_ERROR, div.USER_ERROR, div.RECOVERABLE_ERROR,
+	div.not_caught_Exception
 {
 	background-color: ff0000;
 }
@@ -22,25 +22,36 @@ div.error_handler .PARSE
 	background-color: fa00ff;
 }
 
-div.error_handler .NOTICE, .USER_NOTICE
+div.error_handler div.NOTICE, div.USER_NOTICE
 {
 	background-color: ffff99;
-	text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9), 0 0 2px rgb(0, 0, 0) !important;
+	color: #888;
 }
 
-div.error_handler .STRICT
+div.error_handler div.STRICT
 {
-	background-color: c3c1ff;
+	background-color: #8892BF;
 }
 
-div.error_handler .DEPRECATED, .USER_DEPRECATED
+div.error_handler div.DEPRECATED, div.USER_DEPRECATED
 {
 	background-color: c48c00;
 }
 
+div.error_handler div.Micro_Exception
+{
+	background-color: #00bc09;
+}
+
+div.error_handler div.Unknown_Type_Error
+{
+	background-color: #666;
+}
 
 
-.error_handler {
+
+
+div.error_handler {
 	font-size: 120%;
 	font-family: monospace;
 	margin: 10px 0;
@@ -49,15 +60,15 @@ div.error_handler .DEPRECATED, .USER_DEPRECATED
 	box-shadow: 5px 5px 10px 2px rgba(0, 0, 0, 0.1)
 }
 
-div.error_handler div.content {
+div.error_handler div.error_content {
 	padding: 8px;
 }
 
 div.error_handler div.error_path {
-	// font-weight: 900;
+	font-weight: 900;
 	font-size: 120%;
+	color: #444;
 	background-color: #ddd;
-	text-shadow: 2px 2px 7px rgba(255, 255, 255, 0.9), 0 0 2px rgb(255, 255, 255);
 	border-radius: 0 0 5px 5px;
 }
 
@@ -66,4 +77,12 @@ div.error_handler div.error_text {
 	background-color: #aaa;
 	color: #fff;
 	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 2px rgb(0, 0, 0);
+}
+
+div.error_handler div.error_line {
+	display: inline-block;
+	border-radius: 50%;
+	color: #00bc09;
+	background-color: #f2f2f2;
+	padding: 0 0.4em;
 }
