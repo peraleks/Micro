@@ -87,14 +87,19 @@ class ErrorHandler
     }
 
 
-    public function microException($obj)
+    public function microException($obj, $traceNumber = 0)
     {
         $code    = $obj->getCode();
         $name    = 'Micro_Exception';
         $message = $obj->getMessage();
         $trace   = $obj->getTrace();
-        $file    = $trace[0]['file'];
-        $line    = $trace[0]['line'];
+        if (!isset($trace[$traceNumber]['file'])) {
+            $file = $traceNumber;
+            $line = '';
+        } else {
+            $file = $trace[$traceNumber]['file'];
+            $line = $trace[$traceNumber]['line'];
+        }
         $this->view($code, $name, $message, $file, $line);
     }
 
@@ -115,8 +120,8 @@ class ErrorHandler
                 file_get_contents(__DIR__.'/error.css')
         ."</style>
         <body>
-            <div class=\"error_handler\">
-                <div class=\"$name header\">[{$code}] {$name}</div>
+            <div class=\"error_box\">
+                <div class=\"$name error_header\">[{$code}] {$name}</div>
                 <div class=\"error_text error_content\">
                     {$message}
                 </div>
