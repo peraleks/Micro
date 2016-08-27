@@ -1,8 +1,10 @@
 <?php
-namespace Micro\Root;
+namespace MicroMir\Root;
 
-use Micro\Routing\Router;
-use Micro\Request\Request;
+use MicroMir\{
+	Routing\Router,
+	Request\Request
+};
 
 class Root
 {

@@ -1,7 +1,7 @@
 <?php
-namespace Micro\Request;
+namespace MicroMir\Request;
 
-use Micro\Routing\Router;
+use MicroMir\Routing\Router;
 
 
 class Request

@@ -1,5 +1,5 @@
 <?php
-namespace Micro\Routing;
+namespace MicroMir\Routing;
 
 class Router
 {
@@ -15,7 +15,9 @@ class Router
 
     private $name   = [];
 
-    private $safeMode = true;
+    private $safeMode;
+
+    private $routeFiles = [];
 
     private $last = false;
 
@@ -32,36 +34,74 @@ class Router
 
     private function __construct() {}
 
-    public function init(array $arr) {
-        $Router = $this;
-        foreach ($arr as $value) {
-            include $value;
+    public function init(array $arr, $safe = 1) {
+        $safe == 'notSafe'
+        ?
+        $this->safeMode = 0
+        :
+        $this->safeMode = 1;
+        
+        foreach ($arr as $path) {
+            $this->inclusion($path);
         }
-        $this->checkRouteList();
     }
 
-    public function includeFile($path) {
+    private function  includeFile($path) {
+        $this->inclusion($path);
+
+        return $this;
+    }
+
+    private function  inclusion($path) {
         if ($this->safeMode) {
-            if (!file_exists($path)) {
-                new RouteException(8, [$path]);
-                return $this;
+            if (!is_readable($path)) {
+                new RouteException(8, [$path], 1);
+                return;
+
+            } elseif (mime_content_type ($path) != 'text/x-php') {
+                new RouteException(10, [$path], 1);
+                return;
             }
         }
         $Router = $this;
-        include $path;
+
+        if (array_key_exists($path, $this->routeFiles)) {
+            new RouteException(12, [$path]);
+        }
+        else {
+            $this->routeFiles[$path] = $this->safeMode;
+            ++$this->safeMode;
+            $this->groups[$path] = [];
+            end($this->groups);
+
+            try{
+                include $path;
+
+            } catch (\Error $e) {
+                new RouteException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
+                --$this->safeMode;
+                unset($this->groups[$path]);
+                end($this->groups);
+                return $this; // ?????????????????????????????????? $this
+            }
+
+            if($this->safeMode) {
+                $this->checkRouteGroup($path);
+            }   
+        } 
+        return;
+    }
+
+    private function notSafe() {
+        --$this->safeMode;
 
         return $this;
     }
 
-    public function safeMode($bool = true) {
-        $this->safeMode = $bool;
-
-        return $this;
-    }
-
-    public function group($route) {
-        $this->groups[]['routeGroup'] = $route;
-        end($this->groups);
+    private function group($route) {
+        $file = key($this->groups);
+        $this->groups[$file][]['routeGroup'] = $route;
+        end($this->groups[$file]);
         $this->last = 'group';
 
         return $this;
@@ -69,48 +109,57 @@ class Router
 
     public function groupEnd() {
         $this->last = 'groupEnd';
-        array_pop($this->groups) !== null
-        ?:
-        new RouteException(6,['groupEnd()']);
-
+        $file = key($this->groups);
+        if (Null == array_pop($this->groups[$file]) && $this->safeMode) {
+            new RouteException(6,['groupEnd()']);
+        }
+        if (empty($this->groups[$file]) && !$this->safeMode) {
+            unset($this->groups[$file]);
+            end($this->groups);
+        }
         return $this;
     }
 
-    public function controller() {
+    private function controller($controller) {
         // TODO
     }
 
-    public function route($route, $controller = null)
+    private function route($route, $controller = null)
     {
-        $arr['route']  = '';
-        $arr['controller'] = $controller;
-
-        if (!empty($this->groups)) {
-            for ($i = 0; $i < count($this->groups); $i++) {
-               $arr['route'] .= $this->groups[$i]['routeGroup'];
-            }
-
-            if (!$controller) {
-                for ($k = count($this->groups) - 1; $k >= 0; $k--) {
-                    if (isset($this->groups[$k]['controllerGroup'])) {
-                        $arr['controller'] = $this->groups[$k]['controllerGroup'];
-                        break;
-                    } 
+        foreach ($this->groups as $key => $value) {
+            foreach ($this->groups[$key] as $group => $value) {
+                $prefixs[] = $value['routeGroup'];
+                if (isset($value['controllerGroup'])) {
+                    $controllers[] = $value['controllerGroup'];
                 }
             }
         }
-        if (!isset($arr['controller'])) {
-            new RouteException(3, [$route]);
+        $arr['route'] = implode('', $prefixs);
 
-            return $this;
-        }
-
-        
         $arr['route'] .= $route;
 
         $arr['route'] == '/'
         ?:
         $arr['route'] = rtrim($arr['route'], '/');
+
+        if ($this->safeMode) {
+            if (array_key_exists($arr['route'], $this->routes)) {
+                new RouteException(13, [$arr['route']]);
+                return $this;
+            }
+        }
+
+        if ($controller) {
+            $arr['controller'] = $controller;
+        }
+        elseif (isset($controllers)) {
+            $arr['controller'] = array_pop($controllers);
+        }
+        else {
+            new RouteException(3, [$route, 'route()']);
+            return $this;
+        }
+
 
         if (!strpos($arr['route'], '{')) {
             $arr['type'] = 'simple';
@@ -146,28 +195,33 @@ class Router
         return $this;
     }
 
-    public function get($action, $controller = null) {
+    private function get($action, $controller = null) {
         $this->checkMethod('get', 'GET', $action, $controller);
 
         return $this;
     }
 
-    public function post($action, $controller = null) {
+    private function post($action, $controller = null) {
         $this->checkMethod('post', 'POST', $action, $controller);
 
         return $this;
     }
 
     private function checkMethod($messMethod, $method, $action, $controller = null) {
-        $this->last = 'route'
-        ?
-        $this->method($method, $action, $controller)
-        :
-        new RouteException(4, ["{$messMethod}( ' ".$action." ' )"], 1);
+        if ($this->last != 'route') {
+            new RouteException(4, ["$messMethod( ' ".$action." ' )"], 1);
+            return;
+        }
+        elseif (isset($this->routes[key($this->routes)][$method]['action'])) {
+            new RouteException(14, ["$messMethod( ' ".$action." ' )"], 1);
+            return;
+        }
+        $this->method($method, $action, $controller);
     }
 
     private function method($method, $action, $controller = null) {
         $last = key($this->routes);
+
         $this->routes[$last][$method]['action'] = $action;
 
         $controller
@@ -181,33 +235,45 @@ class Router
     }
 
 
-    public function name($name) {
+    private function name($name) {
         if ($this->last == 'route') {
-            $last = key($this->routes);
             if (array_key_exists($name, $this->name)) {
                 new RouteException( 2,[$name]);
             }
+            $last = key($this->routes);
             $this->name[$name] = &$this->routes[$last];
         } else {
             new RouteException(7, ["name( ' ".$name." ' )"]);
         }
+        return $this;
+    }
+
+    public function __call($name, $args) {
+        new RouteException(9, [$name.'()']);
 
         return $this;
     }
 
-    private function checkRouteList() {
-        if (!empty($this->groups)) {
-            foreach ($this->groups as $value) {
-
-                isset($value['routeController'])
-                ?
-                $controller = $value['routeController']
-                :
-                $controller = '';
-
-                new RouteException(5, [$value['routeGroup'], $controller], '');
-            }
+    private function checkRouteGroup() {
+        $lastFile = key($this->groups);
+        if (!empty($this->groups[$lastFile])) {
+            $this->groupPop($lastFile);
         }
+        array_pop($this->groups);
+        end($this->groups);
     }
 
+    private function groupPop($lastFile) {
+        if ($group = array_pop($this->groups[$lastFile])) {
+
+            isset($group['routeController'])
+            ?
+            $controller = $group['routeController']
+            :
+            $controller = '';
+
+            new RouteException(5, [$group['routeGroup'], $controller], $lastFile);
+            $this->groupPop($lastFile);
+        }
+    }
 }

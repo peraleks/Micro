@@ -1,6 +1,6 @@
 <?php
 
-namespace Micro\Debug\Error;
+namespace MicroMir\Debug\Error;
 
 class ErrorHandler
 {

@@ -1,16 +1,15 @@
 <?php
-namespace Micro\Exception;
+namespace MicroMir\Exception;
 
-use Exception;
-use Micro\Debug\Error\ErrorHandler;
+use MicroMir\Debug\Error\ErrorHandler;
 
-class MicroException extends Exception
+class MicroException extends \Exception
 {
 	protected $exceptionCode = '+';
 
 	public function __construct(int $num, array $m, $traceNumber) {
 		$this->message = $this->prepareMessage($num, $m);
-		$this->code = $this->exceptionCode;
+		$this->code = $this->exceptionCode." $num";
 		ErrorHandler::instance()->microException($this, $traceNumber);
 	}
 
