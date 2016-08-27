@@ -17,7 +17,7 @@ class d
 			echo '<div style="
 								display: inline-block;
 								position: fixed;
-								top: 0;
+								bottom: 0;
 								right: 0;
 								opacity: 0.9;
 								border-radius: 10px;
