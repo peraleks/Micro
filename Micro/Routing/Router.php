@@ -15,6 +15,8 @@ class Router
 
     private $name   = [];
 
+    private $methods = ['GET','POST'];
+
     private $safeMode;
 
     private $routeFiles = [];
@@ -44,6 +46,9 @@ class Router
         
         foreach ($arr as $path) {
             $this->inclusion($path);
+        }
+        if ($this->safeMode) {
+            $this->checkRegex();
         }
     }
 
@@ -282,6 +287,25 @@ class Router
         return $this;
     }
 
+    private function overflow()
+    {
+        if (!$this->safeMode) {
+            return $this;
+        }
+        if ($this->last != 'route') {
+            new RouteException(15, ['overflow()', 'route()']);
+            return $this;
+        }
+        $key = key($this->routes);
+        if (array_key_exists('mask', $this->routes[$key])) {
+            new RouteException(18, ['owerflow()']);
+            return $this;
+        }
+        $this->routes[$key]['overflow'] = '';
+
+        return $this;
+    }
+
     public function __call($name, $args)
     {
         new RouteException(9, [$name.'()']);
@@ -310,6 +334,30 @@ class Router
 
             new RouteException(5, [$group['routeGroup'], $controller], $lastFile);
             $this->groupPop($lastFile);
+        }
+    }
+
+    private function checkRegex()
+    {
+        foreach ($this->methods as $method) {
+            if (isset($this->simple[$method])) {
+                foreach ($this->simple[$method] as $simpleKey => $simple) {
+                    if (isset($this->regex[$method])) {
+                        foreach ($this->regex[$method] as $regexKey => $regex) {
+                            if (!array_key_exists('overflow', $simple) &&
+                                preg_match($regex['mask'], $simple['route']))
+                            {
+                                new RouteException(17, [
+                                        $simple['route'],
+                                        $regex['route'],
+                                        $regex['mask'],
+                                        $method,
+                                    ]);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
