@@ -85,12 +85,12 @@ class Router
                 include $path;
 
             } catch (\Error $e) {
-                \d::p($e);
                 new RouteException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
                 --$this->safeMode;
                 unset($this->groups[$path]);
                 end($this->groups);
-                return $this; // ?????????????????????????????????? $this
+                array_pop($this->routeFiles);
+                return $this;
             }
             if($this->safeMode) {
                 $this->checkRouteGroup($path);
@@ -196,17 +196,16 @@ class Router
             $arr['mask'] = '#^';
             for ($i = 0; $i < count($parts); ++$i) {
                 if (preg_match('/^{\w+}$/', $parts[$i])) {
-                    $arr['mask'] .= '/\w+';
-
+                    $arr['mask'] .= "/".$r = '\w+';
                     $param = trim($parts[$i], '{}');
 
                     if (isset($arr['params'][$param])) {
                         new RouteException( 1, [$param, $route]);
                     }
-
-                    $arr['params'][trim($parts[$i], '{}')] = $i;
-
-                } else {
+                    $arr['params'][$param] = $i;
+                    $arr['reg'][$param] = $r; 
+                }
+                else {
                     $arr['mask'] .= '/'.$parts[$i];
                     $arr['parts'][$i] = $parts[$i];
                 }
@@ -216,6 +215,37 @@ class Router
         $this->routes[$arr['route']] = $arr;
         end($this->routes);
         $this->last = 'route';
+
+        return $this;
+    }
+
+    private function regex($regexArr = null) {
+        if (!is_array($regexArr)) {
+            new RouteException(21, [__FUNCTION__."( $regexArr )"]);
+            return $this;
+        }
+        if ($this->last != 'route') {
+            new RouteException(15, ['regex()', 'route()']);
+            return $this;
+        }
+        $route = &$this->routes[key($this->routes)];
+        if (!array_key_exists('mask', $route)) {
+            new RouteException(19, ['regex()']);
+            return $this;
+        }
+        foreach ($regexArr as $key => $value) {
+            if (array_key_exists($key, $route['params'])) {
+               $route['reg'][$key] = $value;
+            }
+            else {
+                new RouteException(20, [$key]);
+            }
+        }
+        $arr = $route['parts'];
+        foreach ($route['params'] as $key => $value) {
+            $arr[$value] = $route['reg'][$key];
+        }
+        $route['mask'] = "#^/".implode('/', $arr)."$#";
 
         return $this;
     }
@@ -341,18 +371,17 @@ class Router
     {
         foreach ($this->methods as $method) {
             if (isset($this->simple[$method])) {
-                foreach ($this->simple[$method] as $simpleKey => $simple) {
+                foreach ($this->simple[$method] as $simple) {
                     if (isset($this->regex[$method])) {
-                        foreach ($this->regex[$method] as $regexKey => $regex) {
+                        foreach ($this->regex[$method] as $regex) {
                             if (!array_key_exists('overflow', $simple) &&
                                 preg_match($regex['mask'], $simple['route']))
                             {
                                 new RouteException(17, [
                                         $simple['route'],
                                         $regex['route'],
-                                        $regex['mask'],
                                         $method,
-                                    ]);
+                                    ], $regex['mask']);
                             }
                         }
                     }
