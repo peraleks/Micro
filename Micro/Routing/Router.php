@@ -141,7 +141,7 @@ class Router
         }
         $group = &$this->groups[key($this->groups)];
         $group[count($group) - 1]['controllerGroup'] = $controller;
-        // \d::p($this->groups);
+
         return $this;
     }
 
@@ -160,7 +160,6 @@ class Router
             }
         }
         $arr['route'] = implode('', $prefixs);
-
         $arr['route'] .= $route;
 
         $arr['route'] == '/'
@@ -185,31 +184,47 @@ class Router
             return $this;
         }
 
-
         if (!strpos($arr['route'], '{')) {
             $arr['type'] = 'simple';
         }
         else {
             $arr['type'] = 'regex';
             $parts = preg_split('#/#', $arr['route'], -1, PREG_SPLIT_NO_EMPTY);
-
             $arr['mask'] = '#^';
-            for ($i = 0; $i < count($parts); ++$i) {
-                if (preg_match('/^{\w+}$/', $parts[$i])) {
-                    $arr['mask'] .= "/".$r = '\w+';
+            $optional = 0;
+
+            for ($i = 0; $i < count($parts); ++$i)
+            {
+                if (preg_match('/^{.+}$/', $parts[$i])) {
+
                     $param = trim($parts[$i], '{}');
+
+                    $param = preg_replace('/\?/','', $param, 1, $opt);
+
+                    if ($opt) {
+                        if (++$optional == 1) {
+                            $arr['optional'] = $i;
+                        }
+                    }
+                    if (!$optional) {
+                        $arr['mask'] .= '/\w+';
+                    }
+                    $arr['parts'][$i] = '\w+';
 
                     if (isset($arr['params'][$param])) {
                         new RouteException( 1, [$param, $route]);
                     }
                     $arr['params'][$param] = $i;
-                    $arr['reg'][$param] = $r; 
                 }
                 else {
                     $arr['mask'] .= '/'.$parts[$i];
                     $arr['parts'][$i] = $parts[$i];
                 }
             }
+            $optional
+            ?
+            $arr['mask'] .= '(/(.*))?$#'
+            :
             $arr['mask'] .= '$#';
         }
         $this->routes[$arr['route']] = $arr;
@@ -219,7 +234,8 @@ class Router
         return $this;
     }
 
-    private function regex($regexArr = null) {
+    private function regex($regexArr = null)
+    {
         if (!is_array($regexArr)) {
             new RouteException(21, [__FUNCTION__."( $regexArr )"]);
             return $this;
@@ -235,17 +251,22 @@ class Router
         }
         foreach ($regexArr as $key => $value) {
             if (array_key_exists($key, $route['params'])) {
-               $route['reg'][$key] = $value;
+               $route['parts'][$route['params'][$key]] = $value;
             }
             else {
                 new RouteException(20, [$key]);
             }
         }
-        $arr = $route['parts'];
-        foreach ($route['params'] as $key => $value) {
-            $arr[$value] = $route['reg'][$key];
+        if (array_key_exists('optional', $route)) {
+            $route['mask'] = '#^';
+            for ($i = 0; $i < $route['optional']; $i++) {
+                $route['mask'] .= '/'.$route['parts'][$i];
+            }
+            $route['mask'] .= '(/(.*))?$#';
         }
-        $route['mask'] = "#^/".implode('/', $arr)."$#";
+        else {
+            $route['mask'] = "#^/".implode('/',  $route['parts'])."$#";
+        }
 
         return $this;
     }
