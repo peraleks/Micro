@@ -15,6 +15,8 @@ class Router
 
     private $name   = [];
 
+    private $namePrefixs = [];
+
     private $methods = ['GET','POST'];
 
     private $safeMode;
@@ -80,6 +82,9 @@ class Router
             ++$this->safeMode;
             $this->groups[$path] = [];
             end($this->groups);
+            $this->namePrefixs[] = '';
+            end($this->namePrefixs);
+            $this->last = false;
 
             try{
                 include $path;
@@ -90,11 +95,13 @@ class Router
                 unset($this->groups[$path]);
                 end($this->groups);
                 array_pop($this->routeFiles);
+                array_pop($this->namePrefixs);
                 return $this;
             }
             if($this->safeMode) {
                 $this->checkRouteGroup($path);
-            }   
+            }
+            array_pop($this->namePrefixs);
         } 
         return;
     }
@@ -307,16 +314,17 @@ class Router
     private function method($method, $action, $controller = null)
     {
         $last = key($this->routes);
-        $this->routes[$last][$method]['action'] = $action;
+        $lastRoute = &$this->routes[$last];
+        $lastRoute[$method]['action'] = $action;
 
         $controller
         ?
-        $this->routes[$last][$method]['controller'] = $controller
+        $lastRoute[$method]['controller'] = $controller
         :
-        $this->routes[$last][$method]['controller'] = &$this->routes[$last]['controller'];
+        $lastRoute[$method]['controller'] = &$lastRoute['controller'];
 
         $type = $this->routes[$last]['type'];
-        $this->$type[$method][$last] = &$this->routes[$last];
+        $this->$type[$method][$last] = &$lastRoute;
     }
 
 
@@ -326,15 +334,49 @@ class Router
             new RouteException(16, [__FUNCTION__.'()']);
             return $this;
         }
-        if ($this->last == 'route') {
-            if (array_key_exists($name, $this->name)) {
-                new RouteException( 2,[$name]);
-            }
-            $last = key($this->routes);
-            $this->name[$name] = &$this->routes[$last];
-        } else {
+        if (!$this->last == 'route') {
             new RouteException(7, ["name( ' ".$name." ' )"]);
+            return $this;
         }
+        $route = &$this->routes[key($this->routes)];
+
+        if ($this->safeMode && array_key_exists('name', $route)) {
+            new RouteException(22, ["name(' $name ')"]);
+            return $this;
+        }
+        $last = key($this->namePrefixs);
+        if (!empty($this->namePrefixs[$last])) {
+            $name = $this->namePrefixs[$last][0].$name;
+        }
+        if ($this->safeMode && array_key_exists($name, $this->name)) {
+            new RouteException( 2,[$name]);
+            return $this;
+        }
+        if ($this->safeMode) {
+            $route['name'] = $name;
+        }
+        $this->name[$name] = &$route;
+
+        return $this;
+    }
+
+    private function namePrefix($prefix = null)
+    {
+        if ($this->last) {
+            new RouteException(15, ['namePrefix()', '$Router']);
+            return $this;
+        }
+        $last = key($this->namePrefixs);
+
+        if (null == $prefix) {
+            !empty($this->namePrefixs)
+            ?:
+            $this->namePrefixs[$last][0] = $this->namePrefixs[$last - 1][0];
+        }
+        else {
+            $this->namePrefixs[$last][0] = $prefix;
+        }
+
         return $this;
     }
 
