@@ -578,19 +578,28 @@ class Router
 
         $view = '<table cellpadding="5" border="5" bgcolor="#444" style=" border-spacing: 0px;"">';
         $view .= "<tr style=\"color: #eee; font-family: monospace\">
-        <th><input style=\"width: 100%\"></input></th>
-        <th></th>";
+        
+        <th><input id=\"input_file\" style=\"width: 100%\"></input></th>
+        <th></th>
+        <th><input id=\"input_name\" style=\"width: 100%\"></input></th>";
         $aa = $a + 1;
-        $view .= "<th colspan=\"$aa\"></th>";
-        $view .= "<th></th></tr>";
-        $view .= "<tr id=\"sort\" style=\"cursor: pointer; background-color: #aaa; color: #eee; font-family: monospace\"><th>&nbsp</th><th></th><th></th>";
+        $view .= "<th colspan=\"$aa\"><input id=\"input_parts\" style=\"width: 100%\"></input></th>";
+        $view .= "<th><input id=\"input_route\" style=\"width: 100%\"></input></th></tr>";
+        $view .= "<tr id=\"sort\" style=\"cursor: pointer; background-color: #aaa; color: #eee; font-family: monospace\">
+        <th></th>
+        <th><span style=\"color: #ff0;\">&#8593</span></th>
+        <th></th>
+        <th></th>";
         for ($i = 0; $i < $a; $i++) {
             $view .= "<th></th>";
         }
         $view .= "<th></th></tr>";
+        $counter = 0;
         foreach($route as $key => $value) {
+            $counter++;
             $view .= '<tr style="color: #eee; font-family: monospace">';
             $view .= $value['file'];
+            $view .= "<td>$counter</td>";
             $view .= $value['name'];
             $view .= "<td style=\" font-size: 0em; min-width: 15px; background-color: #334\">{$value['parts']}</td>";
             for ($i = 0; $i < $a; $i++) {

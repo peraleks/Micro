@@ -1,23 +1,31 @@
 window.onload = function () {
-	var table = document.body.children[0];
-	var sort = document.getElementById('sort');
-	var rowsTable = [];
-	var cellsTable = [];
-	var	sortFlag = [];
-	var	header = 2;
-	var cellsLength = table.rows[header + 1].cells.length
+	var table      = document.body.children[0];
+	var sort       = document.getElementById('sort');
+	var inputFile  = document.getElementById('input_file');
+	var inputName  = document.getElementById('input_name');
+	var inputParts = document.getElementById('input_parts');
+	var inputRoute = document.getElementById('input_route');
+	var rowsArray  = [];
+	var cellsArray = [];
+	var	header     = 2;
+	var rowsCount  = table.rows.length - header;
+	var cellsCount = table.rows[header + 1].cells.length
+	var	sortFlag   = [];
 	var lastIndex;
-	for (c = 0; c < cellsLength; c++) {
-		cellsTable[c] = [];
-		sortFlag[c] = 1;
-		for (i = header; i < table.rows.length; i++) {
+
+	for (c = 0; c < cellsCount; c++) {
+		cellsArray[c] = [];
+		  sortFlag[c] = 1;
+		
+		for (r = 0; r < rowsCount; r++) {
 			if (c == 0) {
-				rowsTable[i] = [];
-				rowsTable[i] = table.rows[i].innerHTML;
+				rowsArray[r] = [];
+				rowsArray[r] = table.rows[r + header].innerHTML;
 			}
-			cellsTable[c][i - header] = [];
-			cellsTable[c][i - header]['value'] = table.rows[i].cells[c].innerHTML;
-			cellsTable[c][i - header]['number'] = i;
+			cellsArray[c][r] = [];
+			cellsArray[c][r]['value'] = table.rows[r + header].cells[c].innerHTML;
+			cellsArray[c][r]['number'] = r;
+			cellsArray[c][r]['hide'] = 0;
 		}
 	}
 	function compareAsc(a, b) {
@@ -36,16 +44,15 @@ window.onload = function () {
 			target = target.parentNode;
 		}
 		if (sortFlag[target.cellIndex] == 1) {
-			cellsTable[target.cellIndex].sort(compareAsc);
+			cellsArray[target.cellIndex].sort(compareAsc);
 			target.innerHTML = '<span style="color: #ff0;">&#8593</span>';
 			target.style.background = '#000';
 		}
 		else {
-			cellsTable[target.cellIndex].sort(compareDesc);
+			cellsArray[target.cellIndex].sort(compareDesc);
 			target.innerHTML = '<span style="color: #ff0;">&#8595</span>';
 		}
 		if (lastIndex != undefined) {
-			console.dir(target.parentNode.children[lastIndex].innerHTML);
 			if (target.cellIndex != lastIndex) {
 				target.parentNode.children[lastIndex].innerHTML = '';
 				target.parentNode.children[lastIndex].style.background = '#444';
@@ -54,12 +61,61 @@ window.onload = function () {
 		}
 		lastIndex = target.cellIndex;
 		sortFlag[target.cellIndex] = sortFlag[target.cellIndex] * -1;
+		tableRewrite();
+	}
 
-		for (var i = header; i <= table.rows.length - 1; i++) {
-			table.rows[i].innerHTML = rowsTable[cellsTable[target.cellIndex][i - header]['number']];
+	function  tableRewrite() {
+		for (r = 0; r < rowsCount; r++) {
+			var hide = 0;
+
+			for (c = 0; c < cellsCount; c++) {
+
+				for (h = 0; h < rowsCount; h++) {
+
+					if (cellsArray[lastIndex][r]['number'] == cellsArray[c][h]['number']) {
+						hide += cellsArray[c][h]['hide'];
+					}
+				}
+			}
+			if (hide > 0) {
+				table.rows[r + header].style.display = "none";
+			}
+			else {
+				table.rows[r + header].style.display = "table-row";
+			}
+			table.rows[r + header].innerHTML = rowsArray[cellsArray[lastIndex][r]['number']];
 		}
 	}
-	console.dir(rowsTable);
-	console.dir(cellsTable);
+
+	function inputHandler(value, cell) {
+		for (i = 0; i < rowsCount; i++) {
+			if (value == '') {
+				cellsArray[cell][i]['hide'] = 0;
+			}
+			else if (cellsArray[cell][i]['value'].search(value) < 0) {
+				cellsArray[cell][i]['hide'] = 1;
+			}
+			else {
+				cellsArray[cell][i]['hide'] = 0;
+			}
+		}
+		tableRewrite();
+	}
+
+	inputFile.onkeyup = function(event) {
+		inputHandler(inputFile.value, 0);
+	}
+
+	inputName.onkeyup = function(event) {
+		inputHandler(inputName.value, 1);
+	}
+
+	inputParts.onkeyup = function(event) {
+		inputHandler(inputParts.value, 2);
+	}
+
+	inputRoute.onkeyup = function(event) {
+		inputHandler(inputRoute.value, 12);
+	}
 
 };
