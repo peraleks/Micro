@@ -158,6 +158,7 @@ class Router
             new RouteException(16, [__FUNCTION__.'()']);
             return $this;
         }
+        $prefixs[] = '';
         foreach ($this->groups as $key => $value) {
             foreach ($this->groups[$key] as $group => $value) {
                 $prefixs[] = $value['routeGroup'];
@@ -234,6 +235,9 @@ class Router
             :
             $arr['mask'] .= '$#';
         }
+        if ($this->safeMode) {
+            $arr['file'] = debug_backtrace()[0]['file'].'::'.debug_backtrace()[0]['line'];
+        }
         $this->routes[$arr['route']] = $arr;
         end($this->routes);
         $this->last = 'route';
@@ -304,7 +308,7 @@ class Router
             new RouteException(4, ["$messMethod( ' ".$action." ' )"], 1);
             return;
         }
-        elseif (isset($this->routes[key($this->routes)][$method]['action'])) {
+        if (isset($this->routes[key($this->routes)][$method]['action'])) {
             new RouteException(14, ["$messMethod( ' ".$action." ' )"], 1);
             return;
         }
@@ -368,7 +372,7 @@ class Router
         }
         $last = key($this->namePrefixs);
 
-        if (null == $prefix) {
+        if (null === $prefix) {
             !empty($this->namePrefixs)
             ?:
             $this->namePrefixs[$last][0] = $this->namePrefixs[$last - 1][0];
@@ -389,12 +393,12 @@ class Router
             new RouteException(15, ['overflow()', 'route()']);
             return $this;
         }
-        $key = key($this->routes);
-        if (array_key_exists('mask', $this->routes[$key])) {
+        $lastRoure = &$this->routes[key($this->routes)];
+        if (array_key_exists('mask', $lastRoure)) {
             new RouteException(18, ['owerflow()']);
             return $this;
         }
-        $this->routes[$key]['overflow'] = '';
+        $lastRoure['overflow'] = '';
 
         return $this;
     }
@@ -451,5 +455,160 @@ class Router
                 }
             }
         }
+    }
+
+
+    public function matchUrl($url, $method)
+    {
+        $url = parse_url($url, PHP_URL_PATH);
+
+        $url == '/'
+        ?:
+        $url = rtrim($url, '/');
+
+        if (array_key_exists($url, $this->simple[$method])) {
+            return [
+                    'controller' => $this->simple[$method][$url][$method]['controller'],
+                    'action'     => $this->simple[$method][$url][$method]['action']
+                   ];
+        }
+        foreach ($this->regex[$method] as $regexArr) {
+
+            if (preg_match($regexArr['mask'], $url)) {
+                $urlParts = explode('/', ltrim($url, '/'));
+
+                if (array_key_exists('optional', $regexArr)) {
+                    if (($count = count($urlParts)) > count($regexArr['parts'])) {
+                        return '404';
+                    }
+                    else {
+                        for ($i = $regexArr['optional']; $i < $count; ++$i) {
+                            $i.'<br>';
+                            if (!preg_match('#^'.$regexArr['parts'][$i].'$#', $urlParts[$i])) {
+                                return '404';
+                            }
+                        }
+                    }
+                }
+                $params = [];
+                foreach ($regexArr['params'] as $key => $value) {
+                    if (array_key_exists($value, $urlParts)) {
+                        $params[$key] = $urlParts[$value];
+                    }
+                    else {
+                        break;
+                    }
+                }
+                return [
+                        'controller' => $regexArr[$method]['controller'],
+                        'action'     => $regexArr[$method]['action'],
+                        'params'     => $params
+                       ];
+            }
+        }
+        return '404';
+    }
+
+    public function list($regex = null)
+    {
+        $a = 0;
+        $urlParts = '';
+        foreach ($this->routes as $key => $value) {
+            unset($urlRoute);
+            if (array_key_exists('parts', $value)) {
+
+                $urlParts = implode('', $value['parts']); 
+
+                array_key_exists('optional', $value)
+                ?
+                $optional = $value['optional']
+                :
+                $optional = 999;
+
+                $parts = explode('/', ltrim($value['route'], '/'));
+                 
+                for ($i = 0; $i < count($value['parts']); $i++) {
+                    if ($i >= $optional) {
+                        $urlRoute[$i] = '<td style="color: #f88; background-color: #334">'
+                                         .$value['parts'][$i]
+                                         .'</td>';
+                    }
+                    elseif (preg_match('/^{/', $parts[$i])) {
+                       $urlRoute[$i] = '<td style="color: #0ff; background-color: #334">'
+                                        .$value['parts'][$i]
+                                        .'</td>';
+                    }
+                    else {
+                        $urlRoute[$i] = "<td style=\"background-color: #334\">{$value['parts'][$i]}</td>";
+                    }
+                }
+            }
+            else {
+                if ($value['route'] == '/') {
+                    $urlRoute[0] = "<td style=\"background-color: #334\">/</td>";
+                    $urlParts = '/';
+                }
+                else {
+                    $arr = explode('/', ltrim($value['route'], '/'));
+                    $urlParts = implode('', $arr);
+                    foreach ($arr as $val) {
+                        $urlRoute[] = "<td style=\"background-color: #334\">$val</td>";
+                    }
+                }
+            }
+            $cnt = count($urlRoute);
+            $a > $cnt
+            ?:
+            $a = $cnt;
+
+            if (array_key_exists('name', $value)) {
+                $route[$key]['name'] = '<td style="color: #ccf;">'.$value['name'].'</td>';
+            } else {
+                $route[$key]['name'] = '<td></td>';
+            }
+      
+            if (array_key_exists('file', $value)) {
+                $route[$key]['file'] = '<td style="color: #aff;">'.$value['file'].'</td>';
+            } else {
+                $route[$key]['file'] = '<td></td>';
+            }
+            $route[$key]['parts'] = $urlParts;
+            $route[$key]['url'] = $urlRoute;
+        }
+
+        $view = '<table cellpadding="5" border="5" bgcolor="#444" style=" border-spacing: 0px;"">';
+        $view .= "<tr style=\"color: #eee; font-family: monospace\">
+        <th><input style=\"width: 100%\"></input></th>
+        <th></th>";
+        $aa = $a + 1;
+        $view .= "<th colspan=\"$aa\"></th>";
+        $view .= "<th></th></tr>";
+        $view .= "<tr id=\"sort\" style=\"cursor: pointer; background-color: #aaa; color: #eee; font-family: monospace\"><th>&nbsp</th><th></th><th></th>";
+        for ($i = 0; $i < $a; $i++) {
+            $view .= "<th></th>";
+        }
+        $view .= "<th></th></tr>";
+        foreach($route as $key => $value) {
+            $view .= '<tr style="color: #eee; font-family: monospace">';
+            $view .= $value['file'];
+            $view .= $value['name'];
+            $view .= "<td style=\" font-size: 0em; min-width: 15px; background-color: #334\">{$value['parts']}</td>";
+            for ($i = 0; $i < $a; $i++) {
+
+                array_key_exists($i, $value['url'])
+                ?
+                $view .= $value['url'][$i]
+                :
+                $view .= "<td style=\"background-color: #334\"></td>";
+            }
+            
+            $view .= "<td>{$key}</td>";
+            $view .= '</tr>';
+        }
+         $view .= '</table>';
+         $view .= '<script>'.file_get_contents(__DIR__.'/route.js').'</script>';
+
+         echo $view;
+        // \d::p($route);
     }
 }
