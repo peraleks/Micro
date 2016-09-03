@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+}
+
+#table {
+	background-color: #444;
+	border-spacing: 0px;
+	font-family: monospace;
+	color: #eee;
+}
+
+#table td {
+	padding: 5px;
+	white-space: nowrap;
+}
+
+.highlight {
+	border-bottom: 1px solid #d67c00;
+	border-top : 1px solid #f90;
+}
+
+#sort {
+	cursor: pointer;
+	background-color: #777;
+}
+
+
+input {
+	width: 92%;
+	margin: 0 -0.5em 0.2em -0.5em;
+	background-color: #333;
+	border: 1px solid #aaa;
+	color: #ff0;
+	padding: 2px;
+}
+
+#input_parts {
+	margin: 1.2em -0.5em 0.2em -0.5em;
+}
+
+.back-parts {
+	background-color: #334;
+}
+
+.optional {
+	color: #f88;
+}
+
+.params {
+	color: #0ff;
+}
+
+.text {
+	color: #eee;
+}
+
+.name {
+	color: #e1ff89;
+}
+
+.file {
+	color: #aff;
+}
+
+.join {
+	font-size: 0em;
+	min-width: 15px;
+}
+
+.route {
+	color: #b8a8ff;
+}
+
+.controller {
+	color: #9cea9a;
+}
+
+.sort_pointer {
+	color: #ff0;
+	background-color: #111;
+}
+
+.minimize {
+	max-width: 15px;
+	overflow: hidden;
+}
+
+.but {
+	width: 13px;
+}
+
+.hidden {
+	display: none;
+}
