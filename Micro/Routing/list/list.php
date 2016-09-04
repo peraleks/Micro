@@ -10,27 +10,27 @@ $td_text     = '<td class="back-parts text">';
 
 
 $partsCount = 0;
-$joinParts = '';
+$joinParts  = '';
 
-foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
+foreach ($this->routes as $RoutesKey => $RoutesValue) {
 
 	unset($splitParts);
 
-	if (array_key_exists('parts', $thisRoutesValue)) {
+	if (array_key_exists('parts', $RoutesValue)) {
 
-		$joinParts = implode(' ', $thisRoutesValue['parts']); 
+		$joinParts = implode(' ', $RoutesValue['parts']); 
 
-		array_key_exists('optional', $thisRoutesValue)
+		array_key_exists('optional', $RoutesValue)
 		?
-		$optional = $thisRoutesValue['optional']
+		$optional = $RoutesValue['optional']
 		:
 		$optional = 999;
 
-		$routeParts = explode('/', ltrim($thisRoutesValue['route'], '/'));
+		$routeParts = explode('/', ltrim($RoutesValue['route'], '/'));
 
         	// оборачиваем в теги части маршрутов parts для parts-раздела
         	// (выделяем необязательные и обычные параметры)
-		for ($i = 0; $i < count($thisRoutesValue['parts']); $i++) {
+		for ($i = 0; $i < count($RoutesValue['parts']); $i++) {
 
 			if ($i >= $optional) {
 				$tag = $td_optional;
@@ -41,17 +41,17 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
 			else {
 				$tag = $td_text;
 			}
-			$splitParts[$i] = $tag.$thisRoutesValue['parts'][$i].'</td>';
+			$splitParts[$i] = $tag.$RoutesValue['parts'][$i].'</td>';
 		}
 	}
 	else {
         	// разбиваем для parts-раздела и оборачиваем в теги простые адреса без параметров 
-		if ($thisRoutesValue['route'] == '/') {
+		if ($RoutesValue['route'] == '/') {
 			$splitParts[0] = $td_text.'/</td>';
 			$joinParts = '/';
 		}
 		else {
-			$arr = explode('/', ltrim($thisRoutesValue['route'], '/'));
+			$arr = explode('/', ltrim($RoutesValue['route'], '/'));
 			$joinParts = implode('', $arr);
 			foreach ($arr as $val) {
 				$splitParts[] = $td_text.$val.'</td>';
@@ -60,8 +60,8 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
 	}
 
     	// добавляем в общий массив 
-	$routes[$thisRoutesKey]['joinParts']  = $joinParts;
-	$routes[$thisRoutesKey]['splitParts'] = $splitParts;
+	$listArr[$RoutesKey]['joinParts']  = $joinParts;
+	$listArr[$RoutesKey]['splitParts'] = $splitParts;
 
     	// считаем количество ячеек таблицы для parts-раздела по самому длинному маршруту
 	$cnt = count($splitParts);
@@ -70,27 +70,48 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
 	$partsCount = $cnt;
 
     	// имена маршрутов
-	if (array_key_exists('name', $thisRoutesValue)) {
-		$routes[$thisRoutesKey]['name'] = $thisRoutesValue['name'];
+	if (array_key_exists('name', $RoutesValue)) {
+		$listArr[$RoutesKey]['name'] = $RoutesValue['name'];
 	}
 	else {
-		$routes[$thisRoutesKey]['name'] = '';
+		$listArr[$RoutesKey]['name'] = '';
 	}
 
         // файлы маршрутов
-	if (array_key_exists('file', $thisRoutesValue)) {
-		$routes[$thisRoutesKey]['file'] = $thisRoutesValue['file'];
+	if (array_key_exists('file', $RoutesValue)) {
+		$listArr[$RoutesKey]['file'] = $RoutesValue['file'];
 	}
 	else {
-		$routes[$thisRoutesKey]['file'] = '';
+		$listArr[$RoutesKey]['file'] = '';
 	}
 
-	// имена контроллеров
-	if (array_key_exists('controller', $thisRoutesValue)) {
-		$routes[$thisRoutesKey]['controller'] = $thisRoutesValue['controller'];
+		// имена контроллеров
+	if (array_key_exists('controller', $RoutesValue)) {
+		$listArr[$RoutesKey]['controller'] = $RoutesValue['controller'];
 	}
 	else {
-		$routes[$thisRoutesKey]['controller'] = '';
+		$listArr[$RoutesKey]['controller'] = '';
+	}
+
+		// добавляем  method action controller
+	foreach ($this->methods as $MethodsValue) {
+				   $listArr[$RoutesKey]['mac'][] = [];
+		$k = count($listArr[$RoutesKey]['mac']) - 1;
+
+		if (array_key_exists($MethodsValue, $RoutesValue)) {
+
+			$listArr[$RoutesKey]['mac'][$k][] = $MethodsValue;
+			$listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$MethodsValue]['action'];
+
+			$RoutesValue[$MethodsValue]['controller'] = $RoutesValue['controller']
+			?
+			$listArr[$RoutesKey]['mac'][$k][] = ''
+			:
+			$listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$MethodsValue]['controller'];
+		}
+		else {
+			$listArr[$RoutesKey]['mac'][$k] = ['', '', ''];
+		}
 	}
 }
 ?>
@@ -106,6 +127,7 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
     </style>
 </head>
 <body>
+<div id='wrap'>
 <table id="table" border="5">
 	<tr>
 		<th>
@@ -119,7 +141,7 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
 			<div></div>
 			<input id="input_name">
 		</th>
-		<th colspan="<?= $partsCount + 1 ?>"  class="back-parts">
+		<th colspan="<?= $partsCount + 1 ?>" class="back-parts">
 			<div></div>
 			<input id="input_parts">
 		</th>
@@ -133,41 +155,80 @@ foreach ($this->routes as $thisRoutesKey => $thisRoutesValue) {
 			<div></div>
 			<input id="input_controller">
 		</th>
+		<?php
+		for ($i = 0; $i < count($this->methods); $i++) {
+			echo
+			'<th>
+				<div type="checkbox" class="but_method" data-cell="'
+					.$this->methods[$i].
+				'">'
+					.$this->methods[$i].
+				'</div>
+			</th>';
+			echo
+			'<th>
+				<input type="checkbox" class="but" data-cell="'
+					.($partsCount + 7 + ($i * 3)).
+				'">
+				<div></div>
+				<input id="input_method">
+			</th>';
+			echo
+			'<th>
+				<input type="checkbox" class="but but_controller" data-cell="'
+				.($partsCount + 8 + ($i * 3)).
+				'">
+				<div></div>
+				<input id="input_method">
+			</th>';
+		}
+		?>
 	</tr>
 	<tr id="sort">
 		<th></th>
 		<th class="sort_pointer">&#8593</th>
 		<th></th>
 		<th></th>
-		<?php for ($i = 0; $i < $partsCount; $i++) { echo "<th></th>"; } ?>
+		<?php for ($i = 0; $i < ($partsCount + count($this->methods) * 3); $i++)
+				  { echo "<th></th>"; }
+		?>
 		<th></th>
 		<th></th>
 	</tr>
 	<?php
 	$counter = 0;
-	foreach($routes as $key => $route) {
+	foreach($listArr as $ListArrKey => $ListArrValue) {
 		$counter++;
 		echo '<tr>';
-		echo '<td class="file">'.$route['file'].'</td>';
+		echo '<td class="file">'		   .$ListArrValue['file']	  .'</td>';
 		echo "<td>$counter</td>";
-		echo '<td class="name">'.$route['name'].'</td>';
-		echo '<td class="back-parts join">'.$route['joinParts'].'</td>';
+		echo '<td class="name">'		   .$ListArrValue['name']	  .'</td>';
+		echo '<td class="back-parts join">'.$ListArrValue['joinParts'].'</td>';
 
 		for ($i = 0; $i < $partsCount; $i++) {
 
-			if (array_key_exists($i, $route['splitParts'])) {
-				echo $route['splitParts'][$i];
+			if (array_key_exists($i, $ListArrValue['splitParts'])) {
+				echo $ListArrValue['splitParts'][$i];
 			}
 			else {
 				echo '<td class="back-parts"></td>';
 			}
 		}
-		echo '<td class="route">'.$key.'</td>';
-		echo '<td class="controller">'.$route['controller'].'</td>';
+		echo '<td class="route">'.$ListArrKey.'</td>';
+		echo '<td class="controller">'.$ListArrValue['controller'].'</td>';
+
+		foreach ($ListArrValue['mac'] as  $MacValue) {
+
+			echo '<td class="method">'			 .$MacValue[0].'</td>';
+			echo '<td class="action">'			 .$MacValue[1].'</td>';
+			echo '<td class="method_controller">'.$MacValue[2].'</td>';
+	
+		}
 		echo '</tr>';
 	}
 	?>
 </table>
+</div>
 </body>
 <script>
 	<?php echo file_get_contents(__DIR__.'/list.js'); ?>

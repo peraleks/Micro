@@ -1,32 +1,53 @@
-var	header     = 2;
 var numericCells = [1];
+var	header = 2;
 
+var wrap       = document.getElementById('wrap');
 var table      = document.getElementById('table');
 var sort       = document.getElementById('sort');
-var inputFile  = document.getElementById('input_file');
-var inputName  = document.getElementById('input_name');
 var inputParts = document.getElementById('input_parts');
-var inputRoute = document.getElementById('input_route');
-var inputController = document.getElementById('input_controller');
+var input 	   = document.getElementsByTagName('input');
 var trTag 	   = document.getElementsByTagName('tr');
 var checkbox   = document.querySelectorAll('.but');
+var methodButton = document.querySelectorAll('.but_method');
 
 var sortCellNumber;
 var sortRowNumber;
 var realRowIndex;
 var lastRowIndex;
+var scrolledValue;
+var scrolled;
 var rowsObject = {};
 var cellsArray = [];
 var	sortFlag   = [];
 var lastIndex  = 1;
 var rowsCount  = table.rows.length - header;
 var cellsCount = table.rows[header + 1].cells.length
+var offset 	   = inputParts.parentNode.getAttribute('colspan') -1;
+var winWidth   = document.documentElement.clientWidth;
 
-for (c = 0; c < cellsCount; c++) {
+table.style.minWidth = winWidth + 'px';
+window.scrollTo(1920, 0);
+
+if (navigator.userAgent.indexOf('Firefox') > -1) {
+
+	table.classList.add('firefox_table');
+	var tdTag = document.getElementsByTagName('td');
+	var thTag = document.getElementsByTagName('th');
+
+	for (var i = 0; i < tdTag.length; i++) {
+		tdTag[i].classList.add('firefox_tdh');
+	}
+	for (var i = 0; i < thTag.length; i++) {
+		thTag[i].classList.add('firefox_tdh');
+	}
+}
+
+
+for (var c = 0; c < cellsCount; c++) {
 	cellsArray[c] = [];
 	  sortFlag[c] = 1;
 	
-	for (r = 0; r < rowsCount; r++) {
+	for (var r = 0; r < rowsCount; r++) {
 		cellsArray[c][r] = [];
 		cellsArray[c][r]['value'] = table.rows[r + header].cells[c].innerHTML;
 		cellsArray[c][r]['number'] = r;
@@ -34,7 +55,7 @@ for (c = 0; c < cellsCount; c++) {
 	}
 }
 function inArray(elem, array) {
-	for (i = 0; i < array.length; i++) {
+	for (var i = 0; i < array.length; i++) {
 		if (array[i] == elem) {
 			return true;
 		}
@@ -46,14 +67,14 @@ function compare(order, num) {
 	if (order != 'desc') {
 		if (!num) {
 			return function compareAsc(a, b) {
-				if (a.value == '') return 1;
-				if (b.value == '') return -1;
+				if (a.value == '') 	   return  1;
+				if (b.value == '') 	   return -1;
 				if (a.value > b.value) return  1;
 				if (a.value < b.value) return -1;
 			}
 		} else {
 			return function compareAscNumeric(a, b) {
-				if (a.value == '') return 1;
+				if (a.value == '') return  1;
 				if (b.value == '') return -1;
 				return  a.value - b.value;
 			}
@@ -73,6 +94,7 @@ function compare(order, num) {
 }
 
 sort.onclick = function(event) {
+	scrolle(this);
 	var target = event.target;
 	if (target.tagName != 'TH') {
 		target = target.parentNode;
@@ -103,27 +125,23 @@ function  tableRewrite() {
 		table.rows[lastRowIndex].classList.remove('highlight');
 	}
 	rowsObject = {};
-	for (r = 0; r < rowsCount; r++) {
+	for (var r = 0; r < rowsCount; r++) {
 		var hide = 0;
 
-		for (c = 0; c < cellsCount; c++) {
+		for (var c = 0; c < cellsCount; c++) {
 
-			for (h = 0; h < rowsCount; h++) {
+			for (var h = 0; h < rowsCount; h++) {
 
 				if (cellsArray[lastIndex][r]['number'] == cellsArray[c][h]['number']) {
 					hide += cellsArray[c][h]['hide'];
 				}
 			}
 		}
-		if (hide > 0) {
-			table.rows[r + header].classList.add('hidden');
-		}
-		else {
-			table.rows[r + header].classList.remove('hidden');
-		}
+		if (hide > 0) {	table.rows[r + header].classList.add('hidden');	}
+			     else { table.rows[r + header].classList.remove('hidden'); }
 
 		sortCellNumber = table.rows[r + header].cells[1].innerHTML;
-		sortRowNumber = cellsArray[lastIndex][r]['number'] + 1;
+		sortRowNumber  = cellsArray[lastIndex][r]['number'] + 1;
 
 		if (sortCellNumber != sortRowNumber) {
 			rowsObject[sortCellNumber] = table.rows[r + header].innerHTML;
@@ -132,7 +150,7 @@ function  tableRewrite() {
 				table.rows[r + header].innerHTML = rowsObject[sortRowNumber];
 			}
 			else {
-				for (s = r + header; s < table.rows.length; s++) {
+				for (var s = r + header; s < table.rows.length; s++) {
 
 					if (table.rows[s].cells[1].innerHTML == sortRowNumber) {
 						table.rows[r + header].innerHTML = table.rows[s].innerHTML;
@@ -146,44 +164,42 @@ function  tableRewrite() {
 			lastRowIndex = r + header;
 		}
 	}
+	if (scrolled) {
+		var rect = scrolled.getBoundingClientRect();
+		window.scrollBy(rect.left - scrolledValue, 0);
+	}
 }
 
 function inputHandler(value, cell) {
-	for (i = 0; i < rowsCount; i++) {
+	for (var i = 0; i < rowsCount; i++) {
 		if (value == '') {
 			cellsArray[cell][i]['hide'] = 0;
 		}
+
 		else if (cellsArray[cell][i]['value'].search(value) < 0) {
-			cellsArray[cell][i]['hide'] = 1;
-		}
-		else {
-			cellsArray[cell][i]['hide'] = 0;
-		}
+				 cellsArray[cell][i]['hide'] = 1;
+		} else { cellsArray[cell][i]['hide'] = 0; }
 	}
 	tableRewrite();
 }
 
-inputFile.onkeyup = function() {
-	inputHandler(inputFile.value, 0);
+
+for (var i = 0; i < input.length; i++) {
+
+	input[i].onkeyup = function() {
+		scrolle(this);
+		if (this.value == ' ') {
+			this.value = '';
+		}
+		this.parentNode.cellIndex < 4
+		?
+		inputHandler(this.value,  this.parentNode.cellIndex)
+		:
+		inputHandler(this.value, +this.parentNode.cellIndex + +offset);
+	}
 }
 
-inputName.onkeyup = function() {
-	inputHandler(inputName.value, 2);
-}
-
-inputParts.onkeyup = function() {
-	inputHandler(inputParts.value, 3);
-}
-
-inputRoute.onkeyup = function() {
-	inputHandler(inputRoute.value, 13);
-}
-
-inputController.onkeyup = function() {
-	inputHandler(inputController.value, 14);
-}
-
-for (i = header; i < trTag.length; i++) {
+for (var i = header; i < trTag.length; i++) {
 	
 	trTag[i].onclick = function(event) {
 		realRowIndex = cellsArray[lastIndex][this.rowIndex - header]['number'];
@@ -196,13 +212,47 @@ for (i = header; i < trTag.length; i++) {
 	}
 }
 
-for (k = 0; k < checkbox.length; k++) {
+for (var k = 0; k < checkbox.length; k++) {
 
 	checkbox[k].onclick = function() {
 
-		for (i = header; i < table.rows.length; i++) {
+		for (var i = header; i < table.rows.length; i++) {
 			table.rows[i].cells[this.getAttribute('data-cell')].classList.toggle('minimize');
 		}
 	}
 }
-console.dir(checkbox);
+
+for (var m = 0; m < methodButton.length; m++) {
+
+	methodButton[m].onclick = function() {
+		scrolle(this);
+		
+		this.classList.toggle('but_method_highlight');
+
+		this.classList.contains('but_method_highlight')
+		?
+		inputHandler('.', +this.parentNode.cellIndex + +offset)
+		:
+		inputHandler( '', +this.parentNode.cellIndex + +offset);
+	}
+}
+
+wrap.onclick = function(event) {
+	if (event.target == this) {
+		var rect = table.getBoundingClientRect();
+		if (rect.left > 0) {
+			window.scrollBy(rect.left, 0);
+		}
+		if (rect.right < winWidth) {
+			window.scrollBy(rect.right - winWidth, 0);
+		}
+	}
+}
+
+function scrolle(self) {
+				var scr = self.getBoundingClientRect();
+	scrolledValue = scr.left;
+	scrolled = self;
+}
+
+console.dir(methodButton);

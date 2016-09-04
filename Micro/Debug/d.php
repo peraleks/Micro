@@ -93,7 +93,7 @@ class d
 					border-bottom: 1px solid #666;
 					font-family: monospace;',
 
-		'int'  =>  'color: efef81; 
+		'int'  =>  'color: #efef81; 
 				 	font-size: 1.7em;
 				 	display: inline-block;
 					border-radius: 50%;
@@ -107,15 +107,11 @@ class d
 					font-family: Consolas;',
 
 		'file' =>  'color: #00d6d2;
-					position: absolute;
-					right: 100;
 					display: inline-block;
 					text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.9), 0 0 2px rgb(0, 0, 0);
 					font-size: 1.4em;',
 
-		'line' =>  'color: 7ddba4;
-					position: absolute;
-					right: 30;
+		'line' =>  'color: #7ddba4;
 					text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 					display: inline-block;
 					border-radius: 50%;

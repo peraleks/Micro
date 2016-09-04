@@ -17,7 +17,7 @@ class Router
 
     private $namePrefixs = [];
 
-    private $methods = ['GET','POST'];
+    private $methods = ['GET', 'POST'];
 
     private $safeMode;
 
