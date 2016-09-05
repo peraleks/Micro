@@ -6,6 +6,10 @@ class ErrorHandler
 {
     static private $instance;
 
+    static private $mgs;
+
+    static private $dev;
+
     private function getErrorName($error){
         $errors = [
             E_ERROR             => 'ERROR',
@@ -33,19 +37,22 @@ class ErrorHandler
 
     private function __construct()
     {
-        ini_set('display_errors', 'on');
-        error_reporting(E_ALL | E_STRICT);
-
         set_error_handler([$this, 'error']);
 
         set_exception_handler([$this, 'exception']);
 
         register_shutdown_function([$this, 'fatalError']);
-
    }
 
    static public function instance() {
         self::$instance ?: self::$instance = new self;
+
+        self::$mgs = &$GLOBALS['MICROCODER_GLOBAL_SETTINGS'];
+
+         if (self::$mgs['DEVELOPMENT'] &&
+            array_key_exists($_SERVER['REMOTE_ADDR'], self::$mgs['DEVELOPMENT_IP'])) {
+            self::$dev = true;
+         }
 
         return self::$instance;
    }
@@ -59,8 +66,8 @@ class ErrorHandler
         $message = $args[1];
         $file    = $args[2];
         $line    = $args[3];
-        $this->view($code, $name, $message, $file, $line);
-
+        $this->notify($code, $name, $message, $file, $line);
+        
         return true;
     }
 
@@ -70,18 +77,21 @@ class ErrorHandler
         $code = $args->getCode();
         $message = $args->getMessage();
         if ($args instanceof \ParseError) {
-            $code = 4; 
+            $code = 4;
+            $this->send500();
         }
         elseif ($args instanceof \Error) {
             $code = 1; 
+            $this->send500();
         }
         elseif ($args instanceof \Exception && $code == 0) {
             $code = 3;
+            $this->send500();
         } 
         $file = $args->getFile();
         $line = $args->getLine();
         $name = $this->getErrorName($code);
-        $this->view($code, $name, $message, $file, $line);
+        $this->notify($code, $name, $message, $file, $line);
 
         return true;
     }
@@ -100,7 +110,7 @@ class ErrorHandler
             $file = $trace[$traceNumber]['file'];
             $line = $trace[$traceNumber]['line'];
         }
-        $this->view($code, $name, $message, $file, $line);
+        $this->notify($code, $name, $message, $file, $line);
     }
 
     public function fatalError()
@@ -108,29 +118,79 @@ class ErrorHandler
         if ($error = error_get_last()) {
             ob_end_clean();
             $name = $this->getErrorName($error['type']);
-            $this->view($error['type'], $name, $error['message'], $error['file'], $error['line']);
+            $this->notify($error['type'], $name, $error['message'], $error['file'], $error['line']);
+            $this->send500();
         }
     }
 
-    private function view($code, $name, $message, $file, $line)
-    {
+    private function send500() {
+        if (self::$dev) return;
+        header($_SERVER['SERVER_PROTOCOL'].' 500 Internal Server Error');
+
+        self::$mgs['LOCALE'] == 'en'
+        ?
+        $message = "Don't worry!<br>Chip 'n Dale Rescue Rangers"
+        :
+        $message = "Сервер отдыхает. Зайдите позже";
+
         echo "
-        <html>
         <style>".
                 file_get_contents(__DIR__.'/error.css')
         ."</style>
-        <body>
-            <div class=\"error_box\">
-                <div class=\"$name error_header\">[{$code}] {$name}</div>
+            <div class=\"width error_box\">
+                <div class=\"error_500 error_header\">500</div>
+                <div></div>
                 <div class=\"error_text error_content\">
-                    {$message}
-                </div>
-                <div class=\"error_path error_content\">
-                    {$file} <div class=\"error_path error_content error_line\">{$line}</div>
+                    $message
                 </div>
             </div>
-        </body>
-        </html>
         ";
+    }
+
+    private function notify($code, $name, $message, $file, $line)
+    {
+        if (self::$dev)
+        {
+            echo "
+            <html>
+            <style>".
+                    file_get_contents(__DIR__.'/error.css')
+            ."</style>
+            <body>
+                <div class=\"error_box\">
+                    <div class=\"$name error_header\">[{$code}] {$name}</div>
+                    <div class=\"error_text error_content\">
+                        {$message}
+                    </div>
+                    <div class=\"error_path error_content\">
+                        {$file} <div class=\"error_path error_content error_line\">{$line}</div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ";
+        }
+        else {
+            if (self::$mgs['ERROR_LOG_FILE']) {
+                $log = &self::$mgs['ERROR_LOG_FILE'];
+                $perm = &self::$mgs['WEB_DIR'];
+            }
+            else {
+                $log = __DIR__.'/../../../../../../storage/logs/error_GLOBAL_SETTINGS_!_!_!_!_!_!_!_!.log';
+                $perm = __DIR__.'/../../../../../../public/error_permission_storage!_!_!_!_!_!_!.log';
+                self::$dev = false;
+                $this->send500();
+            }
+
+            if (!$error = fopen($log, 'ab')) {
+                $error = fopen($perm, 'ab');
+            } 
+                $time = date('Y m d - h:i:s');
+                fwrite($error, '---- '.$time." -------- ".'['.$code.'] '.$name." --------\n"
+                                .$message."\n"
+                                .$file.'::'.$line."\n\n");
+                fclose($error);
+
+        }
     }
 }

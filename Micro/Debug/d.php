@@ -7,7 +7,7 @@ class d
 	public static function m()
 	{
 		if (self::$memory == 0) {
-			define('MICRO_START', microtime(true));
+			// define('MICRO_START', microtime(true));
 			self::$memory = memory_get_usage();
 		} else {
 			$bag = debug_backtrace();

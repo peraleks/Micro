@@ -12,12 +12,14 @@ class Request
 
     public function __construct()
     {
-        // echo urldecode($this->url_path);
     }
 
     public function match(Router $router)
     {
-        $this->routes = $router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
-        // \d::p($this->routes);
+        $this->routes = $router->matchUrl(urldecode($_SERVER['REQUEST_URI']),
+                                                    $_SERVER['REQUEST_METHOD']);
+        if ($this->routes == '404') {
+            header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');
+        }
     }
 }

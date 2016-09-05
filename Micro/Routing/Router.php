@@ -469,7 +469,7 @@ class Router
         if (array_key_exists($url, $this->simple[$method])) {
             return [
                     'controller' => $this->simple[$method][$url][$method]['controller'],
-                    'action'     => $this->simple[$method][$url][$method]['action']
+                        'action' => $this->simple[$method][$url][$method]['action']
                    ];
         }
         foreach ($this->regex[$method] as $regexArr) {
@@ -501,17 +501,28 @@ class Router
                 }
                 return [
                         'controller' => $regexArr[$method]['controller'],
-                        'action'     => $regexArr[$method]['action'],
-                        'params'     => $params
+                            'action' => $regexArr[$method]['action'],
+                            'params' => $params
                        ];
             }
         }
         return '404';
     }
 
-    public function list($regex = null)
+    public function list($url = null)
     {
-       include __DIR__.'/list/list.php';
-       return $this;
+        if (!$url) {
+            new RouteException(16, [__FUNCTION__.'()']);
+            return $this;
+        }
+        $requestUri = parse_url(urldecode($_SERVER['REQUEST_URI']), PHP_URL_PATH);
+        if ($requestUri != $url) {
+            return $this;
+        }
+        $this->matchUrl($url, 'GET') != '404'
+        ?:
+        include __DIR__.'/list/list.php';
+
+        return $this;
     }
 }

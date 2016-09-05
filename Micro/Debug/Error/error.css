@@ -8,23 +8,23 @@ div.error_box div.error_header {
 
 div.error_box div.WARNING, div.USER_WARNING, div.CORE_WARNING, div.COMPILE_WARNING
 {
-	background-color: ffaa00;
+	background-color: #ffaa00;
 }
 
 div.error_box div.ERROR, div.CORE_ERROR, div.COMPILE_ERROR, div.USER_ERROR, div.RECOVERABLE_ERROR,
 	div.not_caught_Exception
 {
-	background-color: ff0000;
+	background-color: #ff0000;
 }
 
 div.error_box .PARSE
 {
-	background-color: fa00ff;
+	background-color: #fa00ff;
 }
 
 div.error_box div.NOTICE, div.USER_NOTICE
 {
-	background-color: ffff99;
+	background-color: #ffff99;
 	color: #888;
 }
 
@@ -35,7 +35,7 @@ div.error_box div.STRICT
 
 div.error_box div.DEPRECATED, div.USER_DEPRECATED
 {
-	background-color: c48c00;
+	background-color: #c48c00;
 }
 
 div.error_box div.Micro_Exception
@@ -46,6 +46,16 @@ div.error_box div.Micro_Exception
 div.error_box div.Unknown_Type_Error
 {
 	background-color: #666;
+}
+
+div.error_500 {
+	background-color: #00bc09;
+}
+
+div.width {
+	margin: 0 auto !important;
+	width: 30%;
+	text-align: center;
 }
 
 div.error_box {
