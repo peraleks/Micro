@@ -103,7 +103,7 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 			$listArr[$RoutesKey]['mac'][$k][] = $MethodsValue;
 			$listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$MethodsValue]['action'];
 
-			$RoutesValue[$MethodsValue]['controller'] = $RoutesValue['controller']
+			$RoutesValue[$MethodsValue]['controller'] == $RoutesValue['controller']
 			?
 			$listArr[$RoutesKey]['mac'][$k][] = ''
 			:

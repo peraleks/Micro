@@ -9,6 +9,8 @@ class Router
 
     private $groups = [];
 
+    private $controllerGroup;
+
     private $simple = [];
 
     private $regex  = [];
@@ -16,6 +18,8 @@ class Router
     private $name   = [];
 
     private $namePrefixs = [];
+
+    private $controllerSpace = [];
 
     private $methods = ['GET', 'POST'];
 
@@ -74,35 +78,47 @@ class Router
         }
         $Router = $this;
 
-        if (array_key_exists($path, $this->routeFiles)) {
-            new RouteException(12, [$path]);
+        if ($this->safeMode) {
+
+            if (array_key_exists($path, $this->routeFiles)) {
+                new RouteException(12, [$path]);
+                return;
+            }
+            if (!empty($this->controllerGroup)) {
+                new RouteException(25, [$this->controllerGroup], 1);
+                return;
+            }
         }
-        else {
-            $this->routeFiles[$path] = $this->safeMode;
-            ++$this->safeMode;
-            $this->groups[$path] = [];
+        $this->routeFiles[$path] = $this->safeMode;
+        ++$this->safeMode;
+        $this->groups[$path] = [];
+        end($this->groups);
+        $this->namePrefixs[] = '';
+        $this->controllerSpace[] = '';
+        $this->last = false;
+
+        try{
+            include $path;
+
+        } catch (\Error $e) {
+            new RouteException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
+            --$this->safeMode;
+            unset($this->groups[$path]);
             end($this->groups);
-            $this->namePrefixs[] = '';
-            end($this->namePrefixs);
-            $this->last = false;
-
-            try{
-                include $path;
-
-            } catch (\Error $e) {
-                new RouteException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
-                --$this->safeMode;
-                unset($this->groups[$path]);
-                end($this->groups);
-                array_pop($this->routeFiles);
-                array_pop($this->namePrefixs);
-                return $this;
-            }
-            if($this->safeMode) {
-                $this->checkRouteGroup($path);
-            }
+            array_pop($this->routeFiles);
             array_pop($this->namePrefixs);
-        } 
+            array_pop($this->controllerSpace);
+            return $this;
+        }
+        if($this->safeMode) {
+            $this->checkRouteGroup($path);
+            if ($this->controllerGroup) {
+                new RouteException(26, [$this->controllerGroup, $path], 1);
+            }
+        }
+        array_pop($this->namePrefixs);
+        array_pop($this->controllerSpace);
+        $this->controllerGroup = null;
         return;
     }
 
@@ -122,12 +138,12 @@ class Router
         return $this;
     }
 
-    public function groupEnd()
+    public function End_group()
     {
-        $this->last = 'groupEnd';
+        $this->last = 'End_group';
         $file = key($this->groups);
-        if (Null == array_pop($this->groups[$file]) && $this->safeMode) {
-            new RouteException(6,['groupEnd()']);
+        if ($this->safeMode && (null === array_pop($this->groups[$file]))) {
+            new RouteException(6,['End_group()']);
         }
         if (empty($this->groups[$file]) && !$this->safeMode) {
             unset($this->groups[$file]);
@@ -138,36 +154,61 @@ class Router
 
     private function controller($controller = null)
     {
-        if (!$controller) {
-            new RouteException(16, [__FUNCTION__.'()']);
-            return $this;
+        if ($this->safeMode) {
+
+            if (!$controller) {
+                new RouteException(16, [__FUNCTION__.'()']);
+                return $this;
+            }
+            if (!empty($this->controllerGroup)) {
+                new RouteException(24, [$this->controllerGroup]);
+                return $this;
+            } 
         }
-        if ($this->last != 'group') {
-            new RouteException(15, ["controller( ' $controller ' )", 'group()']);
-            return $this;
+        $this->controllerGroup = $controller;
+       
+        return $this;
+    }
+
+    private function End_controller($value = null) {
+        if ($this->controllerGroup === null) {
+            new RouteException(6, ["End_controller(' $value ')"]);
         }
-        $group = &$this->groups[key($this->groups)];
-        $group[count($group) - 1]['controllerGroup'] = $controller;
+        $this->controllerGroup = null;
+
+        return $this;
+    }
+
+    private function controllerSpace($space = null)
+    {
+        if ($this->safeMode) {
+            if ($this->last) {
+                new RouteException(15, ['controllerSpace()', '$Router']);
+                return $this;
+            }
+            if (!$space) {
+                new RouteException(16, [__FUNCTION__.'()']);
+                return $this;
+            }
+        }
+        $this->controllerSpace[count($this->controllerSpace) - 1] = $space.'\\';
 
         return $this;
     }
 
     private function route($route = null, $controller = null)
     {
-        if (!$route) {
+        if ($this->safeMode && !$route) {
             new RouteException(16, [__FUNCTION__.'()']);
             return $this;
         }
-        $prefixs[] = '';
-        foreach ($this->groups as $key => $value) {
-            foreach ($this->groups[$key] as $group => $value) {
-                $prefixs[] = $value['routeGroup'];
-                if (isset($value['controllerGroup'])) {
-                    $controllers[] = $value['controllerGroup'];
-                }
+        $routePrefixs[] = '';
+        foreach ($this->groups as $RouteFile) {
+            foreach ($RouteFile as $GroupValue) {
+                $routePrefixs[] = $GroupValue['routeGroup'];
             }
         }
-        $arr['route'] = implode('', $prefixs);
+        $arr['route'] = implode('', $routePrefixs);
         $arr['route'] .= $route;
 
         $arr['route'] == '/'
@@ -182,10 +223,10 @@ class Router
         }
 
         if ($controller) {
-            $arr['controller'] = $controller;
+            $arr['controller'] = end($this->controllerSpace).$controller;
         }
-        elseif (isset($controllers)) {
-            $arr['controller'] = array_pop($controllers);
+        elseif ($this->controllerGroup) {
+            $arr['controller'] = end($this->controllerSpace).$this->controllerGroup;
         }
         else {
             new RouteException(3, [$route, 'route()']);
@@ -323,7 +364,7 @@ class Router
 
         $controller
         ?
-        $lastRoute[$method]['controller'] = $controller
+        $lastRoute[$method]['controller'] = end($this->controllerSpace).$controller
         :
         $lastRoute[$method]['controller'] = &$lastRoute['controller'];
 
@@ -338,7 +379,7 @@ class Router
             new RouteException(16, [__FUNCTION__.'()']);
             return $this;
         }
-        if (!$this->last == 'route') {
+        if ($this->last != 'route') {
             new RouteException(7, ["name( ' ".$name." ' )"]);
             return $this;
         }
@@ -348,10 +389,8 @@ class Router
             new RouteException(22, ["name(' $name ')"]);
             return $this;
         }
-        $last = key($this->namePrefixs);
-        if (!empty($this->namePrefixs[$last])) {
-            $name = $this->namePrefixs[$last][0].$name;
-        }
+        $name = end($this->namePrefixs).$name;
+
         if ($this->safeMode && array_key_exists($name, $this->name)) {
             new RouteException( 2,[$name]);
             return $this;
@@ -364,23 +403,21 @@ class Router
         return $this;
     }
 
-    private function namePrefix($prefix = null)
+    private function namePrefix($prefix = '')
     {
         if ($this->last) {
             new RouteException(15, ['namePrefix()', '$Router']);
             return $this;
         }
-        $last = key($this->namePrefixs);
+        $last = count($this->namePrefixs) - 1;
 
-        if (null === $prefix) {
-            !empty($this->namePrefixs)
-            ?:
-            $this->namePrefixs[$last][0] = $this->namePrefixs[$last - 1][0];
+        if ('' == $prefix) {
+            $this->namePrefixs[$last] = $this->namePrefixs[$last - 1];
         }
         else {
-            $this->namePrefixs[$last][0] = $prefix;
+            $this->namePrefixs[$last] = $prefix;
         }
-
+        
         return $this;
     }
 
@@ -422,14 +459,7 @@ class Router
     private function groupPop($lastFile)
     {
         if ($group = array_pop($this->groups[$lastFile])) {
-
-            isset($group['routeController'])
-            ?
-            $controller = $group['routeController']
-            :
-            $controller = '';
-
-            new RouteException(5, [$group['routeGroup'], $controller], $lastFile);
+            new RouteException(5, [$group['routeGroup']], $lastFile);
             $this->groupPop($lastFile);
         }
     }

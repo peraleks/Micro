@@ -21,5 +21,6 @@ class Request
         if ($this->routes == '404') {
             header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');
         }
+        \d::p($this->routes);
     }
 }
