@@ -3,7 +3,7 @@ namespace MicroMir\Root;
 
 use MicroMir\{
 	Routing\Router,
-	Request\Request
+	Routing\RouterController
 };
 
 class Root
@@ -15,6 +15,6 @@ class Root
     public function __construct()
     {
         $this->router = Router::Instance();
-        $this->request = new Request;
+        $this->request = new RouterController;
     }
 }

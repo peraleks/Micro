@@ -27,6 +27,8 @@ class Router
 
     private $routeFiles = [];
 
+    private $page404    = [];
+
     private $last = false;
 
 
@@ -49,6 +51,8 @@ class Router
         $this->safeMode = 0
         :
         $this->safeMode = 1;
+
+        $this->page404['404'] = '';
         
         foreach ($arr as $path) {
             $this->inclusion($path);
@@ -487,6 +491,16 @@ class Router
         }
     }
 
+    private function page404($controller, $action = null) {
+        if (!$controller) {
+            new RouteException(15, [__FUNCTION__.'()']);
+            return $this;
+        }
+        $this->page404['controller'] = $controller;
+        $this->page404['action']     = $action;
+        
+        return $this;
+    }
 
     public function matchUrl($url, $method)
     {
@@ -509,13 +523,13 @@ class Router
 
                 if (array_key_exists('optional', $regexArr)) {
                     if (($count = count($urlParts)) > count($regexArr['parts'])) {
-                        return '404';
+                        return $this->page404;
                     }
                     else {
                         for ($i = $regexArr['optional']; $i < $count; ++$i) {
                             $i.'<br>';
                             if (!preg_match('#^'.$regexArr['parts'][$i].'$#', $urlParts[$i])) {
-                                return '404';
+                                return $this->page404;
                             }
                         }
                     }
@@ -536,7 +550,7 @@ class Router
                        ];
             }
         }
-        return '404';
+        return $this->page404;
     }
 
     public function list($url = null)
@@ -549,9 +563,9 @@ class Router
         if ($requestUri != $url) {
             return $this;
         }
-        $this->matchUrl($url, 'GET') != '404'
-        ?:
-        include __DIR__.'/list/list.php';
+        if (array_key_exists('404', $this->matchUrl($url, 'GET'))){
+            include __DIR__.'/list/list.php';
+        }
 
         return $this;
     }

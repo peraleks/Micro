@@ -13,7 +13,7 @@ $partsCount = 0;
 $joinParts  = '';
 
 foreach ($this->routes as $RoutesKey => $RoutesValue) {
-
+	
 	unset($splitParts);
 
 	if (array_key_exists('parts', $RoutesValue)) {

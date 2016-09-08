@@ -8,7 +8,11 @@ class ErrorHandler
 
     static private $mgs;
 
-    static private $dev;
+    static private $countHeaders = 0;
+
+    private $headerMessage = [];
+
+    private $headerMessageDefault = [];
 
     private function getErrorName($error){
         $errors = [
@@ -42,20 +46,28 @@ class ErrorHandler
         set_exception_handler([$this, 'exception']);
 
         register_shutdown_function([$this, 'fatalError']);
-   }
-
-   static public function instance() {
-        self::$instance ?: self::$instance = new self;
 
         self::$mgs = &$GLOBALS['MICROCODER_GLOBAL_SETTINGS'];
 
-         if (self::$mgs['DEVELOPMENT'] &&
-            array_key_exists($_SERVER['REMOTE_ADDR'], self::$mgs['DEVELOPMENT_IP'])) {
-            self::$dev = true;
-         }
-
-        return self::$instance;
+        $this->headerMessageDefault['header'] = '500 Internal Server Error';
+        $this->headerMessageDefault['space']  = "@_#_@_%_@_#_@";
+        $this->headerMessageDefault['en']     = "Don't worry!<br>Chip 'n Dale Rescue Rangers";
+        $this->headerMessageDefault['ru']     = "Сервер отдыхает. Зайдите позже";
    }
+
+    static public function instance()
+    {
+        self::$instance ?: self::$instance = new self;
+        
+        return self::$instance;
+    }
+
+    private function Dev() {
+        if (self::$mgs['DEVELOPMENT']
+            &&
+            array_key_exists($_SERVER['REMOTE_ADDR'], self::$mgs['DEVELOPMENT_IP']))
+        { return true; }
+    }
 
 
     public function error()
@@ -66,31 +78,35 @@ class ErrorHandler
         $message = $args[1];
         $file    = $args[2];
         $line    = $args[3];
+
         $this->notify($code, $name, $message, $file, $line);
-        
+
         return true;
     }
 
     public function exception()
     {
-        $args = debug_backtrace()[0]['args'][0];
-        $code = $args->getCode();
+        $args    = debug_backtrace()[0]['args'][0];
+        $code    = $args->getCode();
         $message = $args->getMessage();
+        $file    = $args->getFile();
+        $line    = $args->getLine();
+
         if ($args instanceof \ParseError) {
             $code = 4;
-            $this->send500();
+            $this->sendHeaderMessage($file, $message);
         }
         elseif ($args instanceof \Error) {
             $code = 1; 
-            $this->send500();
+            $this->sendHeaderMessage($file, $message);
         }
         elseif ($args instanceof \Exception && $code == 0) {
             $code = 3;
-            $this->send500();
-        } 
-        $file = $args->getFile();
-        $line = $args->getLine();
+            $this->sendHeaderMessage($file, $message);
+        }
+
         $name = $this->getErrorName($code);
+
         $this->notify($code, $name, $message, $file, $line);
 
         return true;
@@ -103,10 +119,12 @@ class ErrorHandler
         $name    = 'Micro_Exception';
         $message = $obj->getMessage();
         $trace   = $obj->getTrace();
+
         if (!isset($trace[$traceNumber]['file'])) {
             $file = $traceNumber;
             $line = '';
-        } else {
+        }
+        else {
             $file = $trace[$traceNumber]['file'];
             $line = $trace[$traceNumber]['line'];
         }
@@ -119,26 +137,64 @@ class ErrorHandler
             ob_end_clean();
             $name = $this->getErrorName($error['type']);
             $this->notify($error['type'], $name, $error['message'], $error['file'], $error['line']);
-            $this->send500();
+            $this->sendHeaderMessage($error['file'], $error['message']);
         }
     }
 
-    private function send500() {
-        if (self::$dev) return;
-        header($_SERVER['SERVER_PROTOCOL'].' 500 Internal Server Error');
+    public function headerMessage($array = null) {
+        if ($array === null) {
+            $this->errorParam('empty parametrs');
+            return $this;
+        }
+        if (!array_key_exists('dir', $array)) {
+            $this->errorParam("missing key 'dir'");
+            return $this;
+        }
+        $this->headerMessage[$array['dir']] = array_merge($this->headerMessageDefault, $array);
 
-        self::$mgs['LOCALE'] == 'en'
-        ?
-        $message = "Don't worry!<br>Chip 'n Dale Rescue Rangers"
-        :
-        $message = "Сервер отдыхает. Зайдите позже";
+        return $this;
+    }
+
+    private function errorParam($params) {
+        $deb = debug_backtrace()[1];
+        $this->notify(2, 'USER_WARNING', $params, $deb['file'], $deb['line']);
+    }
+
+    private function sendHeaderMessage($file, $mess, $err = null) {
+        if ($this->Dev()) return;
+
+        $arr = $this->headerMessageDefault;
+
+        foreach ($this->headerMessage as $headerMessageKey => $headerMessageValue) {
+
+            if (preg_match('#^'.$headerMessageKey.'.*#', $file)
+                ||
+                preg_match("#^.*?".$headerMessageValue['space'].".*#", $mess))
+            {
+                $arr  = $headerMessageValue;
+                break;
+            }
+        }
+        $number  = explode(' ', $arr['header'])[0];
+
+        if (self::$mgs['LOCALE'] && self::$mgs['LOCALE'] == 'en') {
+            $message = $arr['en'];
+        }
+        else {
+            $message = $arr['ru'];
+        }
+
+        if (self::$countHeaders < 1) {
+            header($_SERVER['SERVER_PROTOCOL'].' '.$arr['header']);
+        }
+        self::$countHeaders++;
 
         echo "
         <style>".
                 file_get_contents(__DIR__.'/error.css')
         ."</style>
             <div class=\"width error_box\">
-                <div class=\"error_500 error_header\">500</div>
+                <div class=\"error_500 error_header\">".$number.$err."</div>
                 <div></div>
                 <div class=\"error_text error_content\">
                     $message
@@ -149,7 +205,7 @@ class ErrorHandler
 
     private function notify($code, $name, $message, $file, $line)
     {
-        if (self::$dev)
+        if ($this->Dev())
         {
             echo "
             <html>
@@ -172,25 +228,29 @@ class ErrorHandler
         }
         else {
             if (self::$mgs['ERROR_LOG_FILE']) {
-                $log = &self::$mgs['ERROR_LOG_FILE'];
-                $perm = &self::$mgs['WEB_DIR'];
+                $log = self::$mgs['BASE_DIR'].self::$mgs['ERROR_LOG_FILE'];
+                $perm = self::$mgs['WEB_DIR'].'/error_permission_storage!_!_!_!_!_!_!.log';
             }
             else {
-                $log = __DIR__.'/../../../../../../storage/logs/error_GLOBAL_SETTINGS_!_!_!_!_!_!_!_!.log';
-                $perm = __DIR__.'/../../../../../../public/error_permission_storage!_!_!_!_!_!_!.log';
-                self::$dev = false;
-                $this->send500();
+                $log = __DIR__.
+                '/../../../../../../storage/logs/error_SETTINGS_!_!_!_!_!_!_!_!.log';
+                $perm = __DIR__.
+                '/../../../../../../error_permission_storage!_!_!_!_!_!_!.log';
+                $this->sendHeaderMessage($file, $message, ' settings');
             }
 
-            if (!$error = fopen($log, 'ab')) {
-                $error = fopen($perm, 'ab');
+            if (!$error = @fopen($log, 'ab')) {
+                if (!$error = @fopen($perm, 'ab')) {
+                    $this->sendHeaderMessage($file, $message, ' permission');
+                    return;
+                }
+                $this->sendHeaderMessage($file, $message, ' permission');
             } 
-                $time = date('Y m d - h:i:s');
-                fwrite($error, '---- '.$time." -------- ".'['.$code.'] '.$name." --------\n"
-                                .$message."\n"
-                                .$file.'::'.$line."\n\n");
-                fclose($error);
-
+            $time = date('Y m d - h:i:s');
+            fwrite($error, '---- '.$time." -------- ".'['.$code.'] '.$name." --------\n"
+                            .$message."\n"
+                            .$file.'::'.$line."\n\n");
+            fclose($error);
         }
     }
 }
