@@ -15,35 +15,55 @@ class RouterController
 
     public function match(Router $router)
     {
-        $this->route = $router->matchUrl(urldecode($_SERVER['REQUEST_URI']),
-                                                    $_SERVER['REQUEST_METHOD']);
+        $this->route
+        =
+        $router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
+
         if (array_key_exists('404', $this->route)) {
-            header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');
 
+            if (!headers_sent()) {
+                header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');
+            }
             if (!array_key_exists('controller', $this->route)) {
-
-                $this->mgs['LOCALE'] == 'en'
-                ?
-                $message = "There's nothing here"
-                :
-                $message = 'Здесь ничего нет';
-
-                include(__DIR__.'/404.php');
-
+               $this->default404();
+               return;
+            }
+            if ($this->route['action']) {
+                try
+                {
+                    $action = $this->route['action'];
+                    (new $this->route['controller'])->$action();
+                }
+                catch (\Error $e)
+                {
+                    $this->default404();
+                    new RouteException(27, [$e->getMessage(), $e->getFile(), $e->getLine()], '404');
+                }
                 return;
             }
-            if (array_key_exists('action', $this->route)) {
-                (new $this->route['controller'])->$this->route['action'];
+            if (preg_match("/(.+?\.html|.+?\.htm)$/", $this->route['controller'])) {
+                if (readfile($this->mgs['WEB_DIR'].$this->route['controller'])) {
+                    return;
+                }
             }
-            if (preg_match("/(.+\.html| .+\.htm)$/", $this->route['controller'])) {
-                readfile($this->mgs['WEB_DIR'].$this->route['controller']);
-            }
+            $this->default404();
         }
         else {
-                $action = $this->route['action'];
-                (new $this->route['controller'])->$action();
+            $action = $this->route['action'];
+            (new $this->route['controller'])->$action();
         }
+    }
 
-        // \d::p($this->route);
+    private function default404() {
+
+        $this->mgs['LOCALE'] == 'en'
+        ?
+        $message = "There's nothing here"
+        :
+        $message = 'Здесь ничего нет';
+
+        include(__DIR__.'/404.php');
+
+        return;
     }
 }

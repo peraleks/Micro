@@ -22,11 +22,14 @@ class d
 								opacity: 0.9;
 								border-radius: 10px;
 								padding: 5px;
+								font-family: monospace;
+								font-size: 1.2em;
 								background-color: #fff;
+								box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.2);
 								text-align: right">'.
 			'<b style="color: red; font-size: 1.2em;">'.
 			(memory_get_usage() - self::$memory) / 1000 .
-			'</b> Kb<br>'.
+			'</b> kb<br>'.
 			'<b style="color: blue; font-size: 1.2em;">'.
 			round(((microtime(true) - MICRO_START) * 1000), 1).
 			'</b> ms'.
@@ -88,6 +91,8 @@ class d
 
 	private static $s = [
 		'main' =>  'background-color: #333;
+					display: inline-block;
+					min-width: 100%;
 					padding: 15px 20px;
 					border-radius: 25px;
 					border-bottom: 1px solid #666;
@@ -104,7 +109,7 @@ class d
 		'body' =>  'background-color: #333;
 					color: #ddd;
 				    font-size: 100%;
-					font-family: Consolas;',
+					font-family: Consolas, monospace;',
 
 		'file' =>  'color: #00d6d2;
 					display: inline-block;

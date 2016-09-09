@@ -12,6 +12,42 @@ $td_text     = '<td class="back-parts text">';
 $partsCount = 0;
 $joinParts  = '';
 
+	// добавляем 404 страницу в массив $routes
+$this->routes[''] = [];
+$this->routes['']['route'] = '';
+$this->routes['']['name']  = '404';
+
+
+array_key_exists('file', $this->page404)
+?
+$this->routes['']['file'] = $this->page404['file']
+:
+$this->routes['']['file'] = '';
+
+
+array_key_exists('action', $this->page404)
+?
+$this->routes['']['GET']['action'] = $this->page404['action']
+:
+$this->routes['']['GET']['action'] = '';
+
+
+if (array_key_exists('controller', $this->page404)) {
+	$this->routes['']['GET']['controller']
+	=
+	$this->routes['']['controller']
+	=
+	$this->page404['controller'];
+}
+else {
+	$this->routes['']['GET']['controller']
+	=
+	$this->routes['']['controller']
+	=
+	'MicroCoder_default';
+}
+
+	// готовим все маршруты для таблицы и сохраняем в массив 
 foreach ($this->routes as $RoutesKey => $RoutesValue) {
 	
 	unset($splitParts);

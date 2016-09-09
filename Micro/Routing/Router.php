@@ -21,7 +21,7 @@ class Router
 
     private $controllerSpace = [];
 
-    private $methods = ['GET', 'POST'];
+    private $methods = ['GET', 'POST', 'PUT', 'DELETE'];
 
     private $safeMode;
 
@@ -491,10 +491,17 @@ class Router
         }
     }
 
-    private function page404($controller, $action = null) {
+    private function page404($controller = null, $action = null)
+    {
         if (!$controller) {
-            new RouteException(15, [__FUNCTION__.'()']);
+            new RouteException(16, [__FUNCTION__.'()']);
             return $this;
+        }
+        if ($this->safeMode) {
+
+            $this->page404['file']
+            =
+            debug_backtrace()[0]['file'].'::'.debug_backtrace()[0]['line'];
         }
         $this->page404['controller'] = $controller;
         $this->page404['action']     = $action;

@@ -8,8 +8,6 @@ class ErrorHandler
 
     static private $mgs;
 
-    static private $countHeaders = 0;
-
     private $headerMessage = [];
 
     private $headerMessageDefault = [];
@@ -184,10 +182,9 @@ class ErrorHandler
             $message = $arr['ru'];
         }
 
-        if (self::$countHeaders < 1) {
+        if (!headers_sent()) {
             header($_SERVER['SERVER_PROTOCOL'].' '.$arr['header']);
         }
-        self::$countHeaders++;
 
         echo "
         <style>".
