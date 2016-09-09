@@ -30,12 +30,10 @@ body {
 	box-shadow: inset 0 0 1px 2px #f90;
 }
 
-
 #table #sort {
 	cursor: pointer;
 	background-color: #777;
 }
-
 
 #table input {
 	width: 92%;
@@ -47,7 +45,7 @@ body {
 }
 
 #table #input_parts {
-	margin: 1.2em -0.5em 0.2em -0.5em;
+	margin: 1.3em -0.5em 0.2em -0.5em;
 }
 
 #table .back-parts {
@@ -108,6 +106,16 @@ body {
 	color: #666;
 	padding: 2px 0;
 	cursor: pointer;
+}
+
+#table .narrow {
+	color: #666;
+	cursor: pointer;
+	min-width: 20px;
+}
+
+#table .narrow_highlight {
+	color: #b1efb7;
 }
 
 #table .but_method_highlight {

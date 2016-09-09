@@ -347,6 +347,26 @@ class Router
         return $this;
     }
 
+    private function put($action = null, $controller = null)
+    {
+        if (!$action) {
+            new RouteException(16, [__FUNCTION__.'()']);
+            return $this;
+        }
+        $this->checkMethod('put', 'PUT', $action, $controller);
+        return $this;
+    }
+
+    private function delete($action = null, $controller = null)
+    {
+        if (!$action) {
+            new RouteException(16, [__FUNCTION__.'()']);
+            return $this;
+        }
+        $this->checkMethod('delete', 'DELETE', $action, $controller);
+        return $this;
+    }
+
     private function checkMethod($messMethod, $method, $action, $controller = null)
     {
         if ($this->last != 'route') {

@@ -9,7 +9,7 @@ var sort       = document.getElementById	  ('sort');
 var inputParts = document.getElementById	  ('input_parts');
 var input 	   = document.getElementsByTagName('input');
 var tableTr    = document.getElementsByTagName('tr');
-var checkbox   = document.querySelectorAll	  ('.but');
+var narrow     = document.querySelectorAll	  ('.narrow');
 var methodBtn  = document.querySelectorAll    ('.but_method');
 
 var sortCellNumber;
@@ -33,7 +33,7 @@ window.scrollTo(1920, 0);
 addEvent( input, 	 'keyup', inputKeyup     );
 addEvent( sort,  	 'click', sortClick      );
 addEvent( tableTr,   'click', tableTrClick,  header);
-addEvent( checkbox,  'click', checkboxClick  );
+addEvent( narrow,    'click', narrowClick    );
 addEvent( methodBtn, 'click', methodBtnClick );
 addEvent( wrap,      'click', wrapClick      );
 
@@ -121,8 +121,8 @@ function tableTrClick(event) {
 	this.classList.add('highlight');
 }
 
-function checkboxClick() {
-
+function narrowClick() {
+	this.classList.toggle('narrow_highlight');
 	for (var i = header; i < table.rows.length; i++) {
 		table.rows[i].cells[this.getAttribute('data-cell')].classList.toggle('minimize');
 	}

@@ -10,7 +10,7 @@ $td_text     = '<td class="back-parts text">';
 
 
 $partsCount = 0;
-$joinParts  = '';
+$routeMask  = '';
 
 	// добавляем 404 страницу в массив $routes
 $this->routes[''] = [];
@@ -54,7 +54,7 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 
 	if (array_key_exists('parts', $RoutesValue)) {
 
-		$joinParts = implode(' ', $RoutesValue['parts']); 
+		$routeMask = '/'.implode('/', $RoutesValue['parts']); 
 
 		array_key_exists('optional', $RoutesValue)
 		?
@@ -84,19 +84,18 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
         	// разбиваем для parts-раздела и оборачиваем в теги простые адреса без параметров 
 		if ($RoutesValue['route'] == '/') {
 			$splitParts[0] = $td_text.'/</td>';
-			$joinParts = '/';
 		}
 		else {
 			$arr = explode('/', ltrim($RoutesValue['route'], '/'));
-			$joinParts = implode('', $arr);
 			foreach ($arr as $val) {
 				$splitParts[] = $td_text.$val.'</td>';
 			}
 		}
+		$routeMask = $RoutesValue['route'];
 	}
 
     	// добавляем в общий массив 
-	$listArr[$RoutesKey]['joinParts']  = $joinParts;
+	$listArr[$RoutesKey]['routeMask']  = $routeMask;
 	$listArr[$RoutesKey]['splitParts'] = $splitParts;
 
     	// считаем количество ячеек таблицы для parts-раздела по самому длинному маршруту
@@ -167,35 +166,38 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 <table id="table" border="5">
 	<tr>
 		<th>
-			<input type="checkbox" class="but" data-cell="0">
-			<div></div>
+			<div class="narrow" data-cell="0">
+				&#10040;
+			</div>
 			<input id="input_file">
 		</th>
 		<th></th>
 		<th>
-			<input type="checkbox" class="but" data-cell="2">
-			<div></div>
+			<div class="narrow" data-cell="2">
+				&#10040;
+			</div>
 			<input id="input_name">
 		</th>
 		<th colspan="<?= $partsCount + 1 ?>" class="back-parts">
-			<div></div>
 			<input id="input_parts">
 		</th>
 		<th>
-			<input type="checkbox" class="but" data-cell="<?= $partsCount + 4 ?>">
-			<div></div>
+			<div class="narrow" data-cell="<?= $partsCount + 4 ?>">
+				&#10040;
+			</div>
 			<input id="input_route">
 		</th>
 		<th>
-			<input type="checkbox" class="but" data-cell="<?= $partsCount + 5 ?>">
-			<div></div>
+			<div class="narrow" data-cell="<?= $partsCount + 5 ?>">
+				&#10040;
+			</div>
 			<input id="input_controller">
 		</th>
 		<?php
 		for ($i = 0; $i < count($this->methods); $i++) {
 			echo
 			'<th>
-				<div type="checkbox" class="but_method" data-cell="'
+				<div class="but_method" data-cell="'
 					.$this->methods[$i].
 				'">'
 					.$this->methods[$i].
@@ -203,18 +205,16 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 			</th>';
 			echo
 			'<th>
-				<input type="checkbox" class="but" data-cell="'
-					.($partsCount + 7 + ($i * 3)).
-				'">
-				<div></div>
+				<div class="narrow" data-cell="'.($partsCount + 7 + ($i * 3)).'">
+					&#10040;
+				</div>
 				<input id="input_method">
 			</th>';
 			echo
 			'<th>
-				<input type="checkbox" class="but but_controller" data-cell="'
-				.($partsCount + 8 + ($i * 3)).
-				'">
-				<div></div>
+				<div class="narrow" data-cell="'.($partsCount + 8 + ($i * 3)).'">
+					&#10040;
+				</div>
 				<input id="input_method">
 			</th>';
 		}
@@ -239,7 +239,7 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 		echo '<td class="file">'		   .$ListArrValue['file']	  .'</td>';
 		echo "<td>$counter</td>";
 		echo '<td class="name">'		   .$ListArrValue['name']	  .'</td>';
-		echo '<td class="back-parts join">'.$ListArrValue['joinParts'].'</td>';
+		echo '<td class="back-parts join">'.$ListArrValue['routeMask'].'</td>';
 
 		for ($i = 0; $i < $partsCount; $i++) {
 
