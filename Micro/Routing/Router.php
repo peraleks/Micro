@@ -146,7 +146,7 @@ class Router
     {
         $this->last = 'End_group';
         $file = key($this->groups);
-        if ($this->safeMode && (null === array_pop($this->groups[$file]))) {
+        if (null === array_pop($this->groups[$file])) {
             new RouteException(6,['End_group()']);
         }
         if (empty($this->groups[$file]) && !$this->safeMode) {
@@ -176,7 +176,7 @@ class Router
 
     private function End_controller($value = null) {
         if ($this->controllerGroup === null) {
-            new RouteException(6, ["End_controller(' $value ')"]);
+            new RouteException(6, ["End_controller('$value')"]);
         }
         $this->controllerGroup = null;
 
@@ -260,9 +260,9 @@ class Router
                         }
                     }
                     if (!$optional) {
-                        $arr['mask'] .= '/\w+';
+                        $arr['mask'] .= '/.+';
                     }
-                    $arr['parts'][$i] = '\w+';
+                    $arr['parts'][$i] = '.+';
 
                     if (isset($arr['params'][$param])) {
                         new RouteException( 1, [$param, $route]);
@@ -315,7 +315,7 @@ class Router
         }
         if (array_key_exists('optional', $route)) {
             $route['mask'] = '#^';
-            for ($i = 0; $i < $route['optional']; $i++) {
+            for ($i = 0; $i < $route['optional']; ++$i) {
                 $route['mask'] .= '/'.$route['parts'][$i];
             }
             $route['mask'] .= '(/(.*))?$#';
@@ -323,7 +323,6 @@ class Router
         else {
             $route['mask'] = "#^/".implode('/',  $route['parts'])."$#";
         }
-
         return $this;
     }
 
@@ -370,11 +369,11 @@ class Router
     private function checkMethod($messMethod, $method, $action, $controller = null)
     {
         if ($this->last != 'route') {
-            new RouteException(4, ["$messMethod( ' ".$action." ' )"], 1);
+            new RouteException(4, ["$messMethod('".$action."')"], 1);
             return;
         }
         if (isset($this->routes[key($this->routes)][$method]['action'])) {
-            new RouteException(14, ["$messMethod( ' ".$action." ' )"], 1);
+            new RouteException(14, ["$messMethod('".$action."')"], 1);
             return;
         }
         $this->method($method, $action, $controller);
@@ -404,13 +403,13 @@ class Router
             return $this;
         }
         if ($this->last != 'route') {
-            new RouteException(7, ["name( ' ".$name." ' )"]);
+            new RouteException(7, ["name('".$name."')"]);
             return $this;
         }
         $route = &$this->routes[key($this->routes)];
 
         if ($this->safeMode && array_key_exists('name', $route)) {
-            new RouteException(22, ["name(' $name ')"]);
+            new RouteException(22, ["name('$name')"]);
             return $this;
         }
         $name = end($this->namePrefixs).$name;
@@ -540,7 +539,8 @@ class Router
         if (array_key_exists($url, $this->simple[$method])) {
             return [
                     'controller' => $this->simple[$method][$url][$method]['controller'],
-                        'action' => $this->simple[$method][$url][$method]['action']
+                        'action' => $this->simple[$method][$url][$method]['action'],
+                        'params' => []
                    ];
         }
         foreach ($this->regex[$method] as $regexArr) {

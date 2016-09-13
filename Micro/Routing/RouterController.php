@@ -1,16 +1,18 @@
 <?php
 namespace MicroMir\Routing;
 
-
 class RouterController
 {
     private $route;
 
     private $mgs;
 
-    public function __construct()
+    private $R;
+
+    public function __construct($R, &$mgs)
     {
-        $this->mgs = &$GLOBALS['MICROCODER_GLOBAL_SETTINGS'];
+        $this->R = $R;
+        $this->mgs = $mgs;
     }
 
     public function match(Router $router)
@@ -18,6 +20,7 @@ class RouterController
         $this->route
         =
         $router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
+        \d::p($this->route);
 
         if (array_key_exists('404', $this->route)) {
 
@@ -32,7 +35,7 @@ class RouterController
                 try
                 {
                     $action = $this->route['action'];
-                    (new $this->route['controller'])->$action();
+                    (new $this->route['controller'])->$action($this->route['params']);
                 }
                 catch (\Error $e)
                 {
@@ -50,7 +53,7 @@ class RouterController
         }
         else {
             $action = $this->route['action'];
-            (new $this->route['controller'])->$action();
+            (new $this->route['controller'])->$action($this->R, $this->route['params']);
         }
     }
 

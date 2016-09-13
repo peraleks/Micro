@@ -6,36 +6,21 @@ class d
 
 	public static function m()
 	{
-		if (self::$memory == 0) {
-			define('MICRO_START', microtime(true));
-			self::$memory = memory_get_usage();
-		} else {
-			$bag = debug_backtrace();
-			$b = '&nbsp&nbsp<b style=" color: blue; font-size: 1em;">'.$bag[0]['file'].'</b>'.
-			'::<b style=" color: green; font-size: 1em;">'.$bag[0]['line'].'</b><br>';
-
-			echo '<div style="
-								display: inline-block;
-								position: fixed;
-								bottom: 0;
-								right: 0;
-								opacity: 0.9;
-								border-radius: 10px;
-								padding: 5px;
-								font-family: monospace;
-								font-size: 1.2em;
-								background-color: #fff;
-								box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.2);
-								text-align: right">'.
-			'<b style="color: red; font-size: 1.2em;">'.
-			(memory_get_usage() - self::$memory) / 1000 .
-			'</b> kb<br>'.
-			'<b style="color: blue; font-size: 1.2em;">'.
-			round(((microtime(true) - MICRO_START) * 1000), 1).
-			'</b> ms'.
-			// $b.
-			'</div>';
+		if (!defined('MICRO_MEMORY')) {
+			define('MICRO_MEMORY', memory_get_usage());;
 		}
+		$mem = (memory_get_usage() - MICRO_MEMORY) / 1000;
+		$time =	round(((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000), 1);
+
+		$deb  = debug_backtrace();
+		$file = $deb[0]['file'];
+		$line = $deb[0]['line'];
+
+		echo
+		"<div title=\"$file::$line\" style=\"".self::$s['time_main']."\">
+			<b style=\"color: red; font-size: 1.2em;\">$mem</b> kb<br>
+			<b style=\"color: blue; font-size: 1.2em;\">$time</b> ms
+		</div>";
 	}
 
 
@@ -123,6 +108,19 @@ class d
 					background-color: #555;
 					padding: 0 0.5em;
 					font-size: 1.7em;',
+
+	'time_main' => 'display: inline-block;
+					position: fixed;
+					bottom: 0;
+					right: 0;
+					opacity: 0.9;
+					border-radius: 10px;
+					padding: 5px;
+					font-family: monospace;
+					font-size: 1.2em;
+					background-color: #fff;
+					box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.2);
+					text-align: right',
 
 	];
 

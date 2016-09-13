@@ -36,6 +36,11 @@ class MicroException extends \Exception
 	}
 
 	protected function decor($param) {
-		return "<span style=\" color: ffff89;\">".$param."</span>";
+		return
+		"<span style=\"
+						color: #ffff88;
+						font-family: monospace;
+						font-size: 1.2em;
+												\">".$param."</span>";
 	}
 }
