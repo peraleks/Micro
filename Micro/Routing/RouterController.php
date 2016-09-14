@@ -15,11 +15,16 @@ class RouterController
         $this->mgs = $mgs;
     }
 
+    public function getSpace() {
+        return $this->route['nSpace'];
+    }
+
     public function match(Router $router)
     {
         $this->route
         =
         $router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
+
         \d::p($this->route);
 
         if (array_key_exists('404', $this->route)) {

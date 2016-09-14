@@ -105,8 +105,14 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 	$partsCount = $cnt;
 
     	// имена маршрутов
+	if (array_key_exists('nSpace', $RoutesValue)) {
+		$listArr[$RoutesKey]['name'] = $RoutesValue['nSpace'].'/';
+	}
+	else {
+		$listArr[$RoutesKey]['name'] = '';
+	}
 	if (array_key_exists('name', $RoutesValue)) {
-		$listArr[$RoutesKey]['name'] = $RoutesValue['name'];
+		$listArr[$RoutesKey]['name'] .= $RoutesValue['name'];
 	}
 	else {
 		$listArr[$RoutesKey]['name'] = '';

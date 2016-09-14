@@ -1,6 +1,6 @@
 <?php ?>
 <style>
-div.error_box {
+div.error_box_404 {
     font-size: 120%;
     font-family: monospace;
     margin: 10px 0;
@@ -8,7 +8,7 @@ div.error_box {
     border-radius: 5px;
 }
 
-div.error_box div.error_header {
+div.error_box_404 div.error_header {
     font-size: 110%;
     font-weight: 500;
     padding: 5px;
@@ -26,18 +26,18 @@ div.error_404 {
     background-color: #00bc09;
 }
 
-div.error_box div.error_content {
+div.error_box_404 div.error_content {
 }
 
-div.error_box div.error_text {
+div.error_box_404 div.error_text {
     padding: 8px 15px;
     font-family: sans-serif;
     background-color: #aaa;
     color: #fff;
-    text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 2px rgb(0, 0, 0);
+    text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 1px #555;
 }
 </style>
-<div class="width error_box">
+<div class="width error_box_404">
     <div class="error_404 error_header">404</div>
     <div></div>
     <div class="error_text">
