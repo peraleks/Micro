@@ -35,11 +35,12 @@ class Root
             return new RootEmptyObject($name);
         }
         if (is_callable(self::$register[$name])) {
+
             $this->$name
             =
             self::$register[$name]
             =
-            call_user_func(self::$register[$name]);
+            call_user_func(self::$register[$name], self::$instance);
         }
         return $this->$name = self::$register[$name];
     }
@@ -73,7 +74,7 @@ class Root
 
             self::$register[$name]
             =
-            call_user_func(self::$register[$name]);
+            call_user_func(self::$register[$name], self::$instance);
         }
         return self::$register[$name];
     }

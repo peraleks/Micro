@@ -7,17 +7,17 @@ class Router
 
     private $routes = [];
 
-    private $urlNodes = [];
-
-    private $controllerGroup;
-
     private $simple = [];
 
     private $regex  = [];
 
     private $name   = [];
 
+    private $urlNodes = [];
+
     private $nameSpace = [];
+
+    private $controllerGroup;
 
     private $controllerSpace = [];
 
@@ -27,7 +27,7 @@ class Router
 
     private $routeFiles = [];
 
-    private $page404    = [];
+    private $page404 = [];
 
     private $last = false;
 
@@ -52,7 +52,8 @@ class Router
         :
         $this->safeMode = 1;
 
-        $this->page404['404'] = '';
+        $this->page404['404']    = '';
+        $this->page404['nSpace'] = '';
         
         foreach ($arr as $path) {
             $this->inclusion($path);
@@ -127,12 +128,21 @@ class Router
 
             return $this;
         }
-        if($this->safeMode) {
-            $this->checkGroup($this->urlNodes, 'node');
-            $this->checkGroup($this->nameSpace, 'nameSpace');
-            if ($this->controllerGroup) {
-                new RouteException(26, [$this->controllerGroup, $path], 1);
-            }
+
+        $this->checkGroup($this->urlNodes, 'node');
+        $this->checkGroup($this->nameSpace, 'nameSpace');
+        if ($this->controllerGroup) {
+            new RouteException(26, [$this->controllerGroup, $path], 1);
+        }
+                                  $file = key($this->urlNodes);
+        if (empty($this->urlNodes[$file])) {
+                  $this->urlNodes[$file] = '';
+            unset($this->urlNodes[$file]);
+        }
+                                   $file = key($this->nameSpace);
+        if (empty($this->nameSpace[$file])) {
+                  $this->nameSpace[$file] = '';
+            unset($this->nameSpace[$file]);
         }
         array_pop($this->controllerSpace);
         $this->controllerGroup = null;
@@ -147,9 +157,10 @@ class Router
 
     private function node($route = '')
     {
-        $file = key($this->urlNodes);
-        $this->urlNodes[$file][] = $route;
+                            $file = key($this->urlNodes);
+            $this->urlNodes[$file][] = $route;
         end($this->urlNodes[$file]);
+        
         $this->last = 'node';
 
         return $this;
@@ -157,23 +168,22 @@ class Router
 
     public function End_node()
     {
-        $this->last = 'End_node';
         $file = key($this->urlNodes);
-        if (null === array_pop($this->urlNodes[$file])) {
-            new RouteException(6,['End_nodeUrl()']);
+
+        if (empty($this->urlNodes) || null === array_pop($this->urlNodes[$file])) {
+            new RouteException(6,['End_node()']);
         }
-        if (empty($this->urlNodes[$file]) && !$this->safeMode) {
-            unset($this->urlNodes[$file]);
-            end($this->urlNodes);
-        }
+        $this->last = 'End_node';
+
         return $this;
     }
 
      private function nameSpace($space = '')
      {
-        $file = key($this->nameSpace);
-        $this->nameSpace[$file][] = $space;
+                             $file = key($this->nameSpace);
+            $this->nameSpace[$file][] = $space;
         end($this->nameSpace[$file]);
+
         $this->last = 'nameSpace';
 
         return $this;
@@ -181,15 +191,12 @@ class Router
 
      public function End_nameSpace()
      {
-         $this->last = 'End_nameSpace';
          $file = key($this->nameSpace);
-         if (null === array_pop($this->nameSpace[$file])) {
+         
+         if (empty($this->nameSpace) || null === array_pop($this->nameSpace[$file])) {
              new RouteException(6,['End_nameSpace()']);
          }
-         if (empty($this->nameSpace[$file]) && !$this->safeMode) {
-             unset($this->nameSpace[$file]);
-             end($this->nameSpace);
-         }
+         $this->last = 'End_nameSpace';
 
          return $this;
      }
@@ -509,8 +516,7 @@ class Router
         if (!empty($group[$lastFile])) {
             $this->groupPop($lastFile, $group, $groupName);
         }
-        array_pop($group);
-        end($group);
+        prev($group);
     }
 
     private function groupPop($lastFile, &$group, $groupName)
@@ -570,6 +576,9 @@ class Router
         ?:
         $url = rtrim($url, '/');
 
+        if (!array_key_exists($method, $this->simple)) {
+            return $this->page404;
+        }
         if (array_key_exists($url, $this->simple[$method])) {
             if (array_key_exists('nSpace', $this->simple[$method][$url])) {
                 $nSpace = $this->simple[$method][$url]['nSpace'];
@@ -583,6 +592,9 @@ class Router
                         'params' => [],
                         'nSpace' => $nSpace,
                    ];
+        }
+        if (!array_key_exists($method, $this->regex)) {
+            return $this->page404;
         }
         foreach ($this->regex[$method] as $regexArr) {
 
@@ -642,5 +654,14 @@ class Router
         }
 
         return $this;
+    }
+
+    public function getByNamespace($namespace) {
+        if (array_key_exists($namespace, $this->name)) {
+            return $this->name[$namespace];
+        }
+        else {
+            return false;
+        }
     }
 }

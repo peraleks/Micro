@@ -6,7 +6,7 @@ class ErrorHandler
 {
     static private $instance;
 
-    static private $mgs;
+    // private $MS;
 
     private $headerMessage = [];
 
@@ -45,8 +45,6 @@ class ErrorHandler
 
         register_shutdown_function([$this, 'fatalError']);
 
-        self::$mgs = &$GLOBALS['MICROCODER_GLOBAL_SETTINGS'];
-
         $this->headerMessageDefault['header'] = '500 Internal Server Error';
         $this->headerMessageDefault['space']  = "@_#_@_%_@_#_@";
         $this->headerMessageDefault['en']     = "Don't worry!<br>Chip 'n Dale Rescue Rangers";
@@ -59,14 +57,6 @@ class ErrorHandler
         
         return self::$instance;
     }
-
-    private function Dev() {
-        if (self::$mgs['DEVELOPMENT']
-            &&
-            array_key_exists($_SERVER['REMOTE_ADDR'], self::$mgs['DEVELOPMENT_IP']))
-        { return true; }
-    }
-
 
     public function error()
     {
@@ -159,7 +149,7 @@ class ErrorHandler
     }
 
     private function sendHeaderMessage($file, $mess, $err = null) {
-        if ($this->Dev()) return;
+        if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) return;
 
         $arr = $this->headerMessageDefault;
 
@@ -175,7 +165,7 @@ class ErrorHandler
         }
         $number  = explode(' ', $arr['header'])[0];
 
-        if (self::$mgs['LOCALE'] && self::$mgs['LOCALE'] == 'en') {
+        if (defined('MICRO_LOCALE') && MICRO_LOCALE == 'en') {
             $message = $arr['en'];
         }
         else {
@@ -202,7 +192,7 @@ class ErrorHandler
 
     private function notify($code, $name, $message, $file, $line)
     {
-        if ($this->Dev())
+        if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true)
         {
             echo "
             <html>
@@ -224,9 +214,9 @@ class ErrorHandler
             ";
         }
         else {
-            if (self::$mgs['ERROR_LOG_FILE']) {
-                $log = self::$mgs['BASE_DIR'].self::$mgs['ERROR_LOG_FILE'];
-                $perm = self::$mgs['WEB_DIR'].'/error_permission_storage!_!_!_!_!_!_!.log';
+            if (defined('MICRO_ERROR_LOG_FILE')) {
+                $log = MICRO_DIR.MICRO_ERROR_LOG_FILE;
+                $perm = WEB_DIR.'/error_permission_storage!_!_!_!_!_!_!.log';
             }
             else {
                 $log = __DIR__.

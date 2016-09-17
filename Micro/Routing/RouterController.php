@@ -5,27 +5,24 @@ class RouterController
 {
     private $route;
 
-    private $mgs;
+    public $nSpace;
 
     private $R;
 
-    public function __construct($R, &$mgs)
+    public function __construct($R)
     {
         $this->R = $R;
-        $this->mgs = $mgs;
     }
 
-    public function getSpace() {
-        return $this->route['nSpace'];
-    }
-
-    public function match(Router $router)
+    public function match()
     {
+
         $this->route
         =
-        $router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
+        $this->R->Router->matchUrl(urldecode($_SERVER['REQUEST_URI']), $_SERVER['REQUEST_METHOD']);
 
-        \d::p($this->route);
+        $this->nSpace = $this->route['nSpace'];
+        // \d::p($this->route);
 
         if (array_key_exists('404', $this->route)) {
 
@@ -50,7 +47,7 @@ class RouterController
                 return;
             }
             if (preg_match("/(.+?\.html|.+?\.htm)$/", $this->route['controller'])) {
-                if (readfile($this->mgs['WEB_DIR'].$this->route['controller'])) {
+                if (readfile(WEB_DIR.$this->route['controller'])) {
                     return;
                 }
             }
@@ -64,11 +61,13 @@ class RouterController
 
     private function default404() {
 
-        $this->mgs['LOCALE'] == 'en'
-        ?
-        $message = "There's nothing here"
-        :
-        $message = 'Здесь ничего нет';
+        if (defined(MICRO_LOCALE) &&  MICRO_LOCALE == 'en') {
+
+            $message = "There's nothing here";
+        }
+        else {
+            $message = 'Здесь ничего нет';
+        }
 
         include(__DIR__.'/404.php');
 

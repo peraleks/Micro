@@ -1,9 +1,9 @@
 <?php
-namespace MicroMir\Root;
+namespace MicroMir\Settings;
 
 use MicroMir\Exception\MicroException;
 
-class RootException extends MicroException
+class SettingsException extends MicroException
 {
 	protected $exceptionCode = 'Root';
 

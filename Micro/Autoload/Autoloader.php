@@ -39,12 +39,15 @@ class Autoloader
      */
     private $baseDir;
 
+    public $al;
+
     /**
      * Регистрирует функцию автозагрузчика и
      * и корневую директорию
      */
     public function __construct($baseDir)
     {
+        $this->al = &$GLOBALS['MICRO_LOADER'];
         spl_autoload_register(array($this, 'microLoader'), false, true);
         $this->baseDir = $baseDir;
     }
@@ -185,10 +188,12 @@ class Autoloader
         for ($i = 0; $i <= $count; ++$i) {
             $path = $this->baseDir.$map[$this->space]['path'][$i].'/'.$class.'.php';
             if (($i == $count) && array_key_exists('strict', $map[$this->space])) {
+                ++$this->al;
                 include $path;
                 return;
             }
             else {
+                ++$this->al;
                 if (file_exists($path)) {
                     include $path;
                     return;

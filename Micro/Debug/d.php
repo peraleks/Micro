@@ -18,8 +18,9 @@ class d
 
 		echo
 		"<div title=\"$file::$line\" style=\"".self::$s['time_main']."\">
+			<b style=\"color: green; font-size: 1.2em;\">{$GLOBALS['MICRO_LOADER']}</b> al<br>
+			<b style=\"color: blue; font-size: 1.2em;\">$time</b> ms<br>
 			<b style=\"color: red; font-size: 1.2em;\">$mem</b> kb<br>
-			<b style=\"color: blue; font-size: 1.2em;\">$time</b> ms
 		</div>";
 	}
 
