@@ -10,12 +10,12 @@ class RootEmptyObject
 	}
 
 	public function __call($name, $params) {
-		new RootException(2, [$name, $this->objName]);
+		new RootException(2, [$name.'()', $this->objName]);
 		return $this;
 	}
 
 	public function __get($name) {
-		new RootException(2, [$name, $this->objName]);
+		new RootException(2, [$name.'()', $this->objName]);
 		return $this;
 	}
 

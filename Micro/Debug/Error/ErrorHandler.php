@@ -6,7 +6,7 @@ class ErrorHandler
 {
     static private $instance;
 
-    // private $MS;
+    private $R;
 
     private $headerMessage = [];
 
@@ -56,6 +56,10 @@ class ErrorHandler
         self::$instance ?: self::$instance = new self;
         
         return self::$instance;
+    }
+
+    public function setRoot($R) {
+        $this->R = $R;
     }
 
     public function error()
@@ -129,6 +133,7 @@ class ErrorHandler
         }
     }
 
+
     public function headerMessage($array = null) {
         if ($array === null) {
             $this->errorParam('empty parametrs');
@@ -194,24 +199,29 @@ class ErrorHandler
     {
         if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true)
         {
-            echo "
-            <html>
-            <style>".
-                    file_get_contents(__DIR__.'/error.css')
-            ."</style>
-            <body>
+            ob_start();
+            echo '<script>';
+            echo file_get_contents(__DIR__.'/error.js');
+            echo '</script>';
+            echo "<style>";
+            echo file_get_contents(__DIR__.'/error.css');
+            echo "</style>
                 <div class=\"error_box\">
                     <div class=\"$name error_header\">[{$code}] {$name}</div>
                     <div class=\"error_text error_content\">
                         {$message}
                     </div>
+                    <div class=\"trace_wrap\">".
+                    $this->trace($file)
+                    ."</div>
                     <div class=\"error_path error_content\">
+                        <div class=\"but_trace\">trace</div>
                         {$file} <div class=\"error_path error_content error_line\">{$line}</div>
                     </div>
-                </div>
-            </body>
-            </html>
-            ";
+                </div>";
+                $ob = ob_get_contents();
+                ob_end_clean();
+                echo $ob;
         }
         else {
             if (defined('MICRO_ERROR_LOG_FILE')) {
@@ -239,5 +249,132 @@ class ErrorHandler
                             .$file.'::'.$line."\n\n");
             fclose($error);
         }
+    }
+
+    private function trace($file) {
+        $trace = debug_backtrace();
+        $arr = [];
+        $argsCount = 0;
+        $k = 0;
+        for ($i = 0; $i < count($trace); ++$i) {
+            if ($k || $trace[$i]['file'] == $file) {
+                ++$k;
+                $fileParts = explode('/', $trace[$i]['file']);
+
+                $arr[$i]['file']
+                =
+                '<td class="trace_file">'
+                .rtrim(array_pop($fileParts), '.php').'</td>';
+
+                $arr[$i]['path']
+                =
+                '<td class="trace_path">'
+                .str_replace(MICRO_DIR.'/', '', implode('/', $fileParts)).'/'.'</td>';
+
+                $arr[$i]['line']
+                =
+                '<td class="trace_line">'.$trace[$i]['line'].'</td>';
+
+                $arr[$i]['func'] = '';
+
+                if (array_key_exists('class', $trace[$i])) {
+
+                    $classParts = explode('\\', $trace[$i]['class']);
+
+                    $arr[$i]['class']
+                    =
+                    '<td class="trace_class">'
+                    .array_pop($classParts).'</td>';
+
+                    $arr[$i]['name_space']
+                    =
+                    '<td class="trace_name_space">'
+                    .implode('\\', $classParts).'\\'.'</td>';
+
+                    if ($trace[$i]['class'] == get_class($this->R)
+                        &&
+                        $trace[$i]['function'] == '__callStatic')
+                    {
+                        if ($funcLink = $this->R->FuncToLink($trace[$i]['args'][0])) {
+
+                            $arr[$i]['func']
+                            =
+                            '<span class="trace_func"> => '.$funcLink.'</span>';
+
+                            $arr[$i]['func_args'] = true;
+                        }
+                    }
+                }
+                else {
+                    $arr[$i]['class'] = '<td class="trace_class"></td>';
+                    $arr[$i]['name_space'] = '<td class="trace_name_space"></td>';
+                }
+
+                if ($trace[$i]['function'] == 'error') {
+                    $arr[$i]['function']
+                    =
+                    '<td class="trace_function">'.$trace[$i + 1]['function']
+                    .$arr[$i]['func']
+                    .'</td>';
+                    ++$i;
+                }
+                else {
+                    $arr[$i]['function']
+                    =
+                    '<td class="trace_function">'.$trace[$i]['function']
+                    .$arr[$i]['func']
+                    .'</td>';
+                }
+
+                foreach ($trace[$i]['args'] as $Arg) {
+                    if (is_object($Arg)) {
+                        $arr[$i]['args'][] = '<td class="trace_args object">'.get_class($Arg).'</td>';
+                    }
+                    elseif (is_array($Arg)) {
+                        $arr[$i]['args'][] = '<td  class="trace_args array">[array]</td>';
+                    }
+                    else {
+                        if (!empty($arr[$i]['func_args'])) {
+                            $arr[$i]['args'][] = '<td  class="trace_args trace_func">'
+                            .$Arg.'</td>';
+                        }
+                        else {
+                            $arr[$i]['args'][] = '<td  class="trace_args">'.$Arg.'</td>';
+                        }
+                    }
+                }
+                $cnt = count($trace[$i]['args']);
+                $argsCount > $cnt
+                ?:
+                $argsCount = $cnt;
+            }
+        }
+        $l = 1;
+        ob_start();
+        echo '<table class="micro_trace">';
+        foreach ($arr as $ArrKey => $ArrValue) {
+            echo '<tr class="color'.($l = $l*-1).'">';
+            echo $ArrValue['path'];
+            echo $ArrValue['line'];
+            echo $ArrValue['file'];
+            echo $ArrValue['name_space'];
+            echo $ArrValue['class'];
+            echo $ArrValue['function'];
+            if (!array_key_exists('args', $ArrValue)) {
+                 $ArrValue['args'] = [];
+            }
+            for ($k = 0; $k < $argsCount; ++$k) {
+                if (array_key_exists($k, $ArrValue['args'])) {
+                    echo $ArrValue['args'][$k];
+                }
+                else {
+                    echo '<td class="trace_args"></td>';
+                }
+            }
+        }
+        echo '</table>';
+        $traceResult = ob_get_contents();
+        ob_end_clean();
+        return $traceResult;
     }
 }

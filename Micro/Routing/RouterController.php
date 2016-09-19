@@ -55,7 +55,7 @@ class RouterController
         }
         else {
             $action = $this->route['action'];
-            (new $this->route['controller'])->$action($this->R, $this->route['params']);
+            (new $this->route['controller']($this->R))->$action($this->R, $this->route['params']);
         }
     }
 

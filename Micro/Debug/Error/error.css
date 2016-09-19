@@ -52,18 +52,14 @@ div.error_500 {
 	background-color: #00bc09;
 }
 
-div.width {
-	margin: 0 auto !important;
-	width: 30%;
-	text-align: center;
-}
-
 div.error_box {
 	font-size: 120%;
 	font-family: monospace;
-	margin: 10px 0;
+	margin: 5px 0;
 	border: 1px solid #ccc;
 	border-radius: 5px;
+	min-width: 100%;
+	float: left;
 }
 
 div.error_box div.error_content {
@@ -91,4 +87,112 @@ div.error_box div.error_line {
 	color: #00bc09;
 	background-color: #f2f2f2;
 	padding: 0 0.4em;
+}
+
+div.error_box div.error_text span.warning {
+	color: #ffff88;
+	font-family: monospace;
+	font-size: 1.2em;
+}
+
+div.error_box div.error_text span.error {
+	padding: 3px 7px;
+	border: 1px solid #c9c96e;
+	background-color: #9b9b9b;
+	border-radius: 5px;
+	color: #ffff88;
+	font-family: monospace;
+	font-size: 1.2em;
+}
+
+div.error_box  div.but_trace {
+	display: inline-block;
+	border-radius: 10px;
+	color: #00bc09;
+	background-color: #f2f2f2;
+	padding: 0 0.4em;
+}
+
+div.error_box  div.but_trace:hover {
+	cursor: pointer;
+}
+
+/* -------------------- stack trace ----------------------- */
+
+div.trace_wrap table.micro_trace {
+	background-color: #444;
+	border-spacing: 0px;
+	color: #eee;
+	min-width: 100%;
+}
+
+div.trace_wrap tr:active {
+	background-color: #111 !important;
+}
+
+div.trace_wrap {
+	min-width: 100%;
+}
+
+div.trace_wrap tr.color1{
+	background-color: #555;
+}
+
+div.trace_wrap td {
+	padding: 1px;
+	white-space: nowrap;
+	padding: 0.4em 0;
+	text-align: center;
+}
+
+div.trace_wrap td.trace_path {
+	color: #aff;
+	text-align: right;
+}
+
+div.trace_wrap td.trace_file {
+	color: #28ffff;
+	text-align: left;
+}
+
+div.trace_wrap td.trace_line {
+	color: #ffff7b;
+	padding: 0 7px;
+}
+
+div.trace_wrap td.trace_class {
+	text-align: left;
+	color: #49ff3f;
+}
+
+div.trace_wrap td.trace_name_space {
+	text-align: right;
+	padding-right: 7px;
+	color: #9cea9a;
+}
+
+div.trace_wrap td.trace_function {
+	color: #ffdb70;
+}
+
+div.trace_wrap td.trace_args {
+	border-left: 1px solid #333;
+	padding: 0 3px;
+	color: #f9f9ca;
+}
+
+div.trace_wrap td.trace_args.object {
+	color: #9cea9a;
+}
+
+div.trace_wrap td.trace_args.array {
+	color: #ccc;
+}
+
+div.trace_wrap table.micro_trace .trace_func {
+	color: #f981f3;
+}
+
+div.error_box .hidden {
+	display: none !important;
 }

@@ -19,7 +19,7 @@ class RouterHelper
 
 	public function getUrl($name) {
 
-		echo $space = $this->R->RouterController->nSpace;
+		$space = $this->R->RouterController->nSpace;
 
 		$cntName = count($nameParts = explode('/', $name));
 
