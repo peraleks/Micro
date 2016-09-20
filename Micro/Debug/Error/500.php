@@ -28,7 +28,7 @@ div.error_user_mmessage div.error_text {
 }
 </style>
 <div class="error_user_mmessage">
-    <div class="error_header">404</div>
+    <div class="error_header"><?php echo $number.$err ?></div>
     <div></div>
     <div class="error_text">
         <?php echo $message ?>

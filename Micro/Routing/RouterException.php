@@ -6,7 +6,7 @@ use MicroMir\{
 	Debug\Error\ErrorHandler
 };
 
-class RouteException extends MicroException
+class RouterException extends MicroException
 {
 	protected $exceptionCode = 'Router';
 

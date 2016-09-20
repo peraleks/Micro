@@ -75,16 +75,8 @@ class Root
 
     public function __call($name, $args)
     {
-        new RootException(10,
-        [
-            $name,
-            '$R->Server()',
-            '$R->Server',
-            '$R->get(\'Server\')',
-            '$R::Server()',
-        ]
-        );
-        return $this->get($name);
+        new RootException(5, ['->'.$name.'()', 'Root']);
+        return $this;
     }
 
     public function __get($name)

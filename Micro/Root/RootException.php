@@ -13,9 +13,7 @@ class RootException extends MicroException
 		2 => "Mетод {0} проигнорирован. Т.к. объект #1# не найден в корневом реестре",
 		3 => "Метод {0} требует {1} аргумента: {2}. Метод проигнорирован",
 		4 => "Mетод {0} проигнорирован. Т.к. связанный объект #1# не найден в корневом реестре",
-
-		10 => "Объект {0} был успешно получен.<br><br> Но лучше не использовать перегрузку метода  {1}  дабы в коде визуально не путать объекты и методы.<br><br> Возможные способы доступа:<br><br> {2} - самый быстрый,&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp {3} , &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp {4}", 
-	
+		5 => "Нет такого метода #0# в корневом объекте {1}. Метод проигнорирован. Возвращён объект {1} ",
 	];
 
 	protected $en = [
@@ -23,6 +21,8 @@ class RootException extends MicroException
 		1 => "not translated",
 		2 => "not translated",
 		3 => "not translated",
+		4 => "not translated",
+		5 => "not translated",
 	];
 
 	public function __construct(int $num, array $m, $traceNumber = 0) {

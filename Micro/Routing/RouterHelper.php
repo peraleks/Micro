@@ -9,13 +9,13 @@ class RouterHelper
 		$this->R = $R;
 	}
 
-	public function __call($name, $params) {
-		new RouterHelperException(0, ['->'.$name.'(...)', __CLASS__]);
-	}
+	// public function __call($name, $params) {
+	// 	new RouterHelperException(0, ['->'.$name.'(...)', __CLASS__]);
+	// }
 
-	public static function __callStatic($name, $args) {
-		new RouterHelperException(0, ['::'.$name.'(...)', __CLASS__]);
-	}
+	// public static function __callStatic($name, $args) {
+	// 	new RouterHelperException(0, ['::'.$name.'(...)', __CLASS__]);
+	// }
 
 	public function getUrl($name) {
 

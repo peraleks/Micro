@@ -42,7 +42,7 @@ class RouterController
                 catch (\Error $e)
                 {
                     $this->default404();
-                    new RouteException(27, [$e->getMessage(), $e->getFile(), $e->getLine()], '404');
+                    new RouterException(27, [$e->getMessage(), $e->getFile(), $e->getLine()], '404');
                 }
                 return;
             }
@@ -55,7 +55,8 @@ class RouterController
         }
         else {
             $action = $this->route['action'];
-            (new $this->route['controller']($this->R))->$action($this->R, $this->route['params']);
+            (new $this->route['controller']($this->R, $this->route['params']))
+                                  ->$action($this->R, $this->route['params']);
         }
     }
 

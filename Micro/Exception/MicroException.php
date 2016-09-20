@@ -31,7 +31,7 @@ class MicroException extends \Exception
 				if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) {
 					$mDec = $this->decor($m[$i], $CssKey);
 	            }
-				$mess = implode($mDec, explode($CssKey.$i.$CssValue, $mess));
+				$mess = str_replace($CssKey.$i.$CssValue, $mDec, $mess);
 			}
 		}
 		return $mess;

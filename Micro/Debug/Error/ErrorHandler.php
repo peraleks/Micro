@@ -71,7 +71,14 @@ class ErrorHandler
         $file    = $args[2];
         $line    = $args[3];
 
-        $this->notify($code, $name, $message, $file, $line);
+        $this->notify(
+                        $code,
+                        $name,
+                        $message,
+                        $file,
+                        $line,
+                        $this->traceHandler(debug_backtrace(), $file)
+                     );
 
         return true;
     }
@@ -99,7 +106,27 @@ class ErrorHandler
 
         $name = $this->getErrorName($code);
 
-        $this->notify($code, $name, $message, $file, $line);
+        $traceArr = [];
+
+        $traceArr[0]['file'] = $file;
+        $traceArr[0]['line'] = $line;
+
+        $trace = $args->getTrace();
+
+        foreach ($trace as $TraceValue) {
+             $traceArr[] = $TraceValue;
+        }
+        // \d::p($traceArr);
+        $this->traceHandler( $traceArr, $file);
+
+        $this->notify(
+                        $code,
+                        $name,
+                        $message,
+                        $file,
+                        $line,
+                        $this->traceHandler( $traceArr, $file)
+                     );
 
         return true;
     }
@@ -120,21 +147,36 @@ class ErrorHandler
             $file = $trace[$traceNumber]['file'];
             $line = $trace[$traceNumber]['line'];
         }
-        $this->notify($code, $name, $message, $file, $line);
+        $this->notify(
+                        $code,
+                        $name,
+                        $message,
+                        $file,
+                        $line,
+                        $this->traceHandler(debug_backtrace(), $file)
+                     );
     }
 
     public function fatalError()
     {
         if ($error = error_get_last()) {
+
             ob_end_clean();
-            $name = $this->getErrorName($error['type']);
-            $this->notify($error['type'], $name, $error['message'], $error['file'], $error['line']);
+
+            $this->notify(
+                           $error['type'],
+                           $this->getErrorName($error['type']),
+                           $error['message'],
+                           $error['file'],
+                           $error['line'],
+                           ''
+                         );
             $this->sendHeaderMessage($error['file'], $error['message']);
         }
     }
 
 
-    public function headerMessage($array = null) {
+    public function setHeaderMessage($array = null) {
         if ($array === null) {
             $this->errorParam('empty parametrs');
             return $this;
@@ -181,200 +223,22 @@ class ErrorHandler
             header($_SERVER['SERVER_PROTOCOL'].' '.$arr['header']);
         }
 
-        echo "
-        <style>".
-                file_get_contents(__DIR__.'/error.css')
-        ."</style>
-            <div class=\"width error_box\">
-                <div class=\"error_500 error_header\">".$number.$err."</div>
-                <div></div>
-                <div class=\"error_text error_content\">
-                    $message
-                </div>
-            </div>
-        ";
+        include(__DIR__.'/500.php');
     }
 
-    private function notify($code, $name, $message, $file, $line)
+
+    private function notify($code, $name, $message, $file, $line, $trace)
     {
-        if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true)
-        {
-            ob_start();
-            echo '<script>';
-            echo file_get_contents(__DIR__.'/error.js');
-            echo '</script>';
-            echo "<style>";
-            echo file_get_contents(__DIR__.'/error.css');
-            echo "</style>
-                <div class=\"error_box\">
-                    <div class=\"$name error_header\">[{$code}] {$name}</div>
-                    <div class=\"error_text error_content\">
-                        {$message}
-                    </div>
-                    <div class=\"trace_wrap\">".
-                    $this->trace($file)
-                    ."</div>
-                    <div class=\"error_path error_content\">
-                        <div class=\"but_trace\">trace</div>
-                        {$file} <div class=\"error_path error_content error_line\">{$line}</div>
-                    </div>
-                </div>";
-                $ob = ob_get_contents();
-                ob_end_clean();
-                echo $ob;
-        }
-        else {
-            if (defined('MICRO_ERROR_LOG_FILE')) {
-                $log = MICRO_DIR.MICRO_ERROR_LOG_FILE;
-                $perm = WEB_DIR.'/error_permission_storage!_!_!_!_!_!_!.log';
-            }
-            else {
-                $log = __DIR__.
-                '/../../../../../../storage/logs/error_SETTINGS_!_!_!_!_!_!_!_!.log';
-                $perm = __DIR__.
-                '/../../../../../../error_permission_storage!_!_!_!_!_!_!.log';
-                $this->sendHeaderMessage($file, $message, ' settings');
-            }
-
-            if (!$error = @fopen($log, 'ab')) {
-                if (!$error = @fopen($perm, 'ab')) {
-                    $this->sendHeaderMessage($file, $message, ' permission');
-                    return;
-                }
-                $this->sendHeaderMessage($file, $message, ' permission');
-            } 
-            $time = date('Y m d - h:i:s');
-            fwrite($error, '---- '.$time." -------- ".'['.$code.'] '.$name." --------\n"
-                            .$message."\n"
-                            .$file.'::'.$line."\n\n");
-            fclose($error);
-        }
+        include(__DIR__.'/notify.php');
     }
 
-    private function trace($file) {
-        $trace = debug_backtrace();
-        $arr = [];
-        $argsCount = 0;
-        $k = 0;
-        for ($i = 0; $i < count($trace); ++$i) {
-            if ($k || $trace[$i]['file'] == $file) {
-                ++$k;
-                $fileParts = explode('/', $trace[$i]['file']);
 
-                $arr[$i]['file']
-                =
-                '<td class="trace_file">'
-                .rtrim(array_pop($fileParts), '.php').'</td>';
+    private function traceHandler($trace, $file)
+    {
+        $ThisClass = __CLASS__;
 
-                $arr[$i]['path']
-                =
-                '<td class="trace_path">'
-                .str_replace(MICRO_DIR.'/', '', implode('/', $fileParts)).'/'.'</td>';
+        include(__DIR__.'/trace.php');
 
-                $arr[$i]['line']
-                =
-                '<td class="trace_line">'.$trace[$i]['line'].'</td>';
-
-                $arr[$i]['func'] = '';
-
-                if (array_key_exists('class', $trace[$i])) {
-
-                    $classParts = explode('\\', $trace[$i]['class']);
-
-                    $arr[$i]['class']
-                    =
-                    '<td class="trace_class">'
-                    .array_pop($classParts).'</td>';
-
-                    $arr[$i]['name_space']
-                    =
-                    '<td class="trace_name_space">'
-                    .implode('\\', $classParts).'\\'.'</td>';
-
-                    if ($trace[$i]['class'] == get_class($this->R)
-                        &&
-                        $trace[$i]['function'] == '__callStatic')
-                    {
-                        if ($funcLink = $this->R->FuncToLink($trace[$i]['args'][0])) {
-
-                            $arr[$i]['func']
-                            =
-                            '<span class="trace_func"> => '.$funcLink.'</span>';
-
-                            $arr[$i]['func_args'] = true;
-                        }
-                    }
-                }
-                else {
-                    $arr[$i]['class'] = '<td class="trace_class"></td>';
-                    $arr[$i]['name_space'] = '<td class="trace_name_space"></td>';
-                }
-
-                if ($trace[$i]['function'] == 'error') {
-                    $arr[$i]['function']
-                    =
-                    '<td class="trace_function">'.$trace[$i + 1]['function']
-                    .$arr[$i]['func']
-                    .'</td>';
-                    ++$i;
-                }
-                else {
-                    $arr[$i]['function']
-                    =
-                    '<td class="trace_function">'.$trace[$i]['function']
-                    .$arr[$i]['func']
-                    .'</td>';
-                }
-
-                foreach ($trace[$i]['args'] as $Arg) {
-                    if (is_object($Arg)) {
-                        $arr[$i]['args'][] = '<td class="trace_args object">'.get_class($Arg).'</td>';
-                    }
-                    elseif (is_array($Arg)) {
-                        $arr[$i]['args'][] = '<td  class="trace_args array">[array]</td>';
-                    }
-                    else {
-                        if (!empty($arr[$i]['func_args'])) {
-                            $arr[$i]['args'][] = '<td  class="trace_args trace_func">'
-                            .$Arg.'</td>';
-                        }
-                        else {
-                            $arr[$i]['args'][] = '<td  class="trace_args">'.$Arg.'</td>';
-                        }
-                    }
-                }
-                $cnt = count($trace[$i]['args']);
-                $argsCount > $cnt
-                ?:
-                $argsCount = $cnt;
-            }
-        }
-        $l = 1;
-        ob_start();
-        echo '<table class="micro_trace">';
-        foreach ($arr as $ArrKey => $ArrValue) {
-            echo '<tr class="color'.($l = $l*-1).'">';
-            echo $ArrValue['path'];
-            echo $ArrValue['line'];
-            echo $ArrValue['file'];
-            echo $ArrValue['name_space'];
-            echo $ArrValue['class'];
-            echo $ArrValue['function'];
-            if (!array_key_exists('args', $ArrValue)) {
-                 $ArrValue['args'] = [];
-            }
-            for ($k = 0; $k < $argsCount; ++$k) {
-                if (array_key_exists($k, $ArrValue['args'])) {
-                    echo $ArrValue['args'][$k];
-                }
-                else {
-                    echo '<td class="trace_args"></td>';
-                }
-            }
-        }
-        echo '</table>';
-        $traceResult = ob_get_contents();
-        ob_end_clean();
         return $traceResult;
     }
 }

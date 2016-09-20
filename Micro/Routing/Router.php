@@ -73,11 +73,11 @@ class Router
     {
         if ($this->safeMode) {
             if (!is_readable($path)) {
-                new RouteException(8, [$path], 1);
+                new RouterException(8, [$path], 1);
                 return;
 
             } elseif (mime_content_type ($path) != 'text/x-php') {
-                new RouteException(10, [$path], 1);
+                new RouterException(10, [$path], 1);
                 return;
             }
         }
@@ -86,11 +86,11 @@ class Router
         if ($this->safeMode) {
 
             if (array_key_exists($path, $this->routeFiles)) {
-                new RouteException(12, [$path]);
+                new RouterException(12, [$path]);
                 return;
             }
             if (!empty($this->controllerGroup)) {
-                new RouteException(25, [$this->controllerGroup], 1);
+                new RouterException(25, [$this->controllerGroup], 1);
                 return;
             }
         }
@@ -112,7 +112,7 @@ class Router
             include $path;
 
         } catch (\Error $e) {
-            new RouteException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
+            new RouterException(11, [$e->getMessage(), $e->getFile(), $e->getLine()]);
 
             --$this->safeMode;
 
@@ -132,7 +132,7 @@ class Router
         $this->checkGroup($this->urlNodes, 'node');
         $this->checkGroup($this->nameSpace, 'nameSpace');
         if ($this->controllerGroup) {
-            new RouteException(26, [$this->controllerGroup, $path], 1);
+            new RouterException(26, [$this->controllerGroup, $path], 1);
         }
                                   $file = key($this->urlNodes);
         if (empty($this->urlNodes[$file])) {
@@ -171,7 +171,7 @@ class Router
         $file = key($this->urlNodes);
 
         if (empty($this->urlNodes) || null === array_pop($this->urlNodes[$file])) {
-            new RouteException(6,['End_node()']);
+            new RouterException(6,['End_node()']);
         }
         $this->last = 'End_node';
 
@@ -194,7 +194,7 @@ class Router
          $file = key($this->nameSpace);
          
          if (empty($this->nameSpace) || null === array_pop($this->nameSpace[$file])) {
-             new RouteException(6,['End_nameSpace()']);
+             new RouterException(6,['End_nameSpace()']);
          }
          $this->last = 'End_nameSpace';
 
@@ -206,11 +206,11 @@ class Router
         if ($this->safeMode) {
 
             if (!$controller) {
-                new RouteException(16, [__FUNCTION__.'()']);
+                new RouterException(16, [__FUNCTION__.'()']);
                 return $this;
             }
             if (!empty($this->controllerGroup)) {
-                new RouteException(24, [$this->controllerGroup]);
+                new RouterException(24, [$this->controllerGroup]);
                 return $this;
             } 
         }
@@ -221,7 +221,7 @@ class Router
 
     private function End_controller($value = null) {
         if ($this->controllerGroup === null) {
-            new RouteException(6, ["End_controller('$value')"]);
+            new RouterException(6, ["End_controller('$value')"]);
         }
         $this->controllerGroup = null;
 
@@ -232,11 +232,11 @@ class Router
     {
         if ($this->safeMode) {
             if ($this->last) {
-                new RouteException(15, ['controllerSpace()', '$Router']);
+                new RouterException(15, ['controllerSpace()', '$Router']);
                 return $this;
             }
             if (!$space) {
-                new RouteException(16, [__FUNCTION__.'()']);
+                new RouterException(16, [__FUNCTION__.'()']);
                 return $this;
             }
         }
@@ -248,7 +248,7 @@ class Router
     private function route($route = null, $controller = null)
     {
         if ($this->safeMode && !$route) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $nodes[] = '';
@@ -266,7 +266,7 @@ class Router
 
         if ($this->safeMode) {
             if (array_key_exists($arr['route'], $this->routes)) {
-                new RouteException(13, [$arr['route']]);
+                new RouterException(13, [$arr['route']]);
                 return $this;
             }
         }
@@ -278,7 +278,7 @@ class Router
             $arr['controller'] = end($this->controllerSpace).$this->controllerGroup;
         }
         else {
-            new RouteException(3, [$route, 'route()']);
+            new RouterException(3, [$route, 'route()']);
             return $this;
         }
 
@@ -310,7 +310,7 @@ class Router
                     $arr['parts'][$i] = '.+';
 
                     if (isset($arr['params'][$param])) {
-                        new RouteException( 1, [$param, $route]);
+                        new RouterException( 1, [$param, $route]);
                     }
                     $arr['params'][$param] = $i;
                 }
@@ -338,16 +338,16 @@ class Router
     private function regex($regexArr = null)
     {
         if (!is_array($regexArr)) {
-            new RouteException(21, [__FUNCTION__."( $regexArr )"]);
+            new RouterException(21, [__FUNCTION__."( $regexArr )"]);
             return $this;
         }
         if ($this->last != 'route') {
-            new RouteException(15, ['regex()', 'route()']);
+            new RouterException(15, ['regex()', 'route()']);
             return $this;
         }
         $route = &$this->routes[key($this->routes)];
         if (!array_key_exists('mask', $route)) {
-            new RouteException(19, ['regex()']);
+            new RouterException(19, ['regex()']);
             return $this;
         }
         foreach ($regexArr as $key => $value) {
@@ -355,7 +355,7 @@ class Router
                $route['parts'][$route['params'][$key]] = $value;
             }
             else {
-                new RouteException(20, [$key]);
+                new RouterException(20, [$key]);
             }
         }
         if (array_key_exists('optional', $route)) {
@@ -374,7 +374,7 @@ class Router
     private function get($action = null, $controller = null)
     {
         if (!$action) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $this->checkMethod('get', 'GET', $action, $controller);
@@ -384,7 +384,7 @@ class Router
     private function post($action = null, $controller = null)
     {
         if (!$action) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $this->checkMethod('post', 'POST', $action, $controller);
@@ -394,7 +394,7 @@ class Router
     private function put($action = null, $controller = null)
     {
         if (!$action) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $this->checkMethod('put', 'PUT', $action, $controller);
@@ -404,7 +404,7 @@ class Router
     private function delete($action = null, $controller = null)
     {
         if (!$action) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $this->checkMethod('delete', 'DELETE', $action, $controller);
@@ -414,11 +414,11 @@ class Router
     private function checkMethod($messMethod, $method, $action, $controller = null)
     {
         if ($this->last != 'route') {
-            new RouteException(4, ["$messMethod('".$action."')"], 1);
+            new RouterException(4, ["$messMethod('".$action."')"], 1);
             return;
         }
         if (isset($this->routes[key($this->routes)][$method]['action'])) {
-            new RouteException(14, ["$messMethod('".$action."')"], 1);
+            new RouterException(14, ["$messMethod('".$action."')"], 1);
             return;
         }
         $this->method($method, $action, $controller);
@@ -444,17 +444,17 @@ class Router
     private function name($name = null)
     {
         if (!$name) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         if ($this->last != 'route') {
-            new RouteException(7, ["name('".$name."')"]);
+            new RouterException(7, ["name('".$name."')"]);
             return $this;
         }
         $route = &$this->routes[key($this->routes)];
 
         if ($this->safeMode && array_key_exists('name', $route)) {
-            new RouteException(22, ["name('$name')"]);
+            new RouterException(22, ["name('$name')"]);
             return $this;
         }
         foreach ($this->nameSpace as $File) {
@@ -468,7 +468,7 @@ class Router
             $fullSpace = $nSpace.'/'.$name;
 
             if ($this->safeMode && array_key_exists($fullSpace, $this->name)) {
-                new RouteException( 2,[$fullSpace]);
+                new RouterException( 2,[$fullSpace]);
                 return $this;
             }
             $route['nSpace'] = $nSpace;
@@ -491,12 +491,12 @@ class Router
             return $this;
         }
         if ($this->last != 'route') {
-            new RouteException(15, ['overflow()', 'route()']);
+            new RouterException(15, ['overflow()', 'route()']);
             return $this;
         }
         $lastRoure = &$this->routes[key($this->routes)];
         if (array_key_exists('mask', $lastRoure)) {
-            new RouteException(18, ['owerflow()']);
+            new RouterException(18, ['owerflow()']);
             return $this;
         }
         $lastRoure['overflow'] = '';
@@ -506,7 +506,7 @@ class Router
 
     public function __call($name, $args)
     {
-        new RouteException(9, [$name.'()']);
+        new RouterException(9, [$name.'()']);
         return $this;
     }
 
@@ -522,7 +522,7 @@ class Router
     private function groupPop($lastFile, &$group, $groupName)
     {
         if ($groupValue = array_pop($group[$lastFile])) {
-            new RouteException(5, [$groupName.'(\''.$groupValue.'\')'], $lastFile);
+            new RouterException(5, [$groupName.'(\''.$groupValue.'\')'], $lastFile);
             $this->groupPop($lastFile, $group, $groupName);
         }
     }
@@ -537,7 +537,7 @@ class Router
                             if (!array_key_exists('overflow', $simple) &&
                                 preg_match($regex['mask'], $simple['route']))
                             {
-                                new RouteException(17, [
+                                new RouterException(17, [
                                         $simple['route'],
                                         $regex['route'],
                                         $method,
@@ -553,7 +553,7 @@ class Router
     private function page404($controller = null, $action = null)
     {
         if (!$controller) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         if ($this->safeMode) {
@@ -642,7 +642,7 @@ class Router
     public function list($url = null)
     {
         if (!$url) {
-            new RouteException(16, [__FUNCTION__.'()']);
+            new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
         $requestUri = parse_url(urldecode($_SERVER['REQUEST_URI']), PHP_URL_PATH);

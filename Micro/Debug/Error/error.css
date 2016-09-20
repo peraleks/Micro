@@ -1,10 +1,3 @@
-div.error_box div.error_header {
-	font-size: 110%;
-	font-weight: 500;
-	padding: 5px;
-	color: #fff;
-	border-radius: 5px 5px 0 0;
-}
 
 div.error_box div.WARNING, div.USER_WARNING, div.CORE_WARNING, div.COMPILE_WARNING
 {
@@ -24,8 +17,11 @@ div.error_box .PARSE
 
 div.error_box div.NOTICE, div.USER_NOTICE
 {
-	background-color: #ffff99;
-	color: #888;
+	background-color: #ffff99 !important;
+	color: #888 !important;
+	border-left: 1px solid #ddd;
+	border-top: 1px solid #ddd;
+	border-right: 1px solid #ddd;
 }
 
 div.error_box div.STRICT
@@ -48,69 +44,74 @@ div.error_box div.Unknown_Type_Error
 	background-color: #666;
 }
 
-div.error_500 {
-	background-color: #00bc09;
-}
-
 div.error_box {
-	font-size: 120%;
-	font-family: monospace;
+	font-family: Consolas, monospace;
+	font-size: 97.5%;
 	margin: 5px 0;
-	border: 1px solid #ccc;
 	border-radius: 5px;
 	min-width: 100%;
-	float: left;
+	display: inline-block;
+}
+
+div.error_box div.error_header {
+	font-size: 110%;
+	font-weight: 500;
+	padding: 5px;
+	color: #fff;
+	border-radius: 5px 5px 0 0;
 }
 
 div.error_box div.error_content {
 	padding: 8px 15px;
 }
 
-div.error_box div.error_path {
-	font-weight: 900;
-	font-size: 120%;
-	color: #444;
-	background-color: #ddd;
-	border-radius: 0 0 5px 5px;
-}
-
 div.error_box div.error_text {
-	font-family: sans-serif;
+	font-size: 115%;
 	background-color: #aaa;
 	color: #fff;
 	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.4), 0 0 1px #555;
 }
 
+div.error_box div.error_path {
+	font-weight: 600;
+	font-size: 110%;
+	color: #444;
+	background-color: #ddd;
+	border-radius: 0 0 5px 5px;
+	text-shadow: 0px 0px 1px rgba(255, 255, 255, 0.7);
+}
+
 div.error_box div.error_line {
 	display: inline-block;
+	font-size: 100%;
+	font-weight: 500;
 	border-radius: 50%;
-	color: #00bc09;
-	background-color: #f2f2f2;
-	padding: 0 0.4em;
+	color: #ffff7b;
+	background-color: #bbb;
+	padding: 0.05em 0.4em 0.1em;
+	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.5);
+}
+
+
+div.error_box div.error_text span.error {
+	padding: 2px 5px;
+	background-color: #9b9b9b;
+	border-radius: 4px;
+	color: #ffff88;
 }
 
 div.error_box div.error_text span.warning {
 	color: #ffff88;
-	font-family: monospace;
-	font-size: 1.2em;
-}
-
-div.error_box div.error_text span.error {
-	padding: 3px 7px;
-	border: 1px solid #c9c96e;
-	background-color: #9b9b9b;
-	border-radius: 5px;
-	color: #ffff88;
-	font-family: monospace;
-	font-size: 1.2em;
 }
 
 div.error_box  div.but_trace {
+	font-weight: 500;
 	display: inline-block;
-	border-radius: 10px;
-	color: #00bc09;
-	background-color: #f2f2f2;
-	padding: 0 0.4em;
+	border-radius: 4px;
+	color: #fff;
+	background-color: #cdcdcd;
+	padding: 0.05em 0.4em 0.2em;
+	text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.5);
 }
 
 div.error_box  div.but_trace:hover {
@@ -120,6 +121,8 @@ div.error_box  div.but_trace:hover {
 /* -------------------- stack trace ----------------------- */
 
 div.trace_wrap table.micro_trace {
+	font-size: inherit;
+	font-size: 80%;
 	background-color: #444;
 	border-spacing: 0px;
 	color: #eee;
@@ -146,8 +149,9 @@ div.trace_wrap td {
 }
 
 div.trace_wrap td.trace_path {
-	color: #aff;
 	text-align: right;
+	padding-left: 3px;
+	color: #aff;
 }
 
 div.trace_wrap td.trace_file {
@@ -160,18 +164,20 @@ div.trace_wrap td.trace_line {
 	padding: 0 7px;
 }
 
-div.trace_wrap td.trace_class {
+div.trace_wrap td.trace_class, span.trace_class {
 	text-align: left;
 	color: #49ff3f;
 }
 
-div.trace_wrap td.trace_name_space {
+div.trace_wrap td.trace_name_space, span.trace_name_space {
 	text-align: right;
+	padding-left: 5px;
 	padding-right: 7px;
 	color: #9cea9a;
 }
 
 div.trace_wrap td.trace_function {
+	padding:  0 5px;
 	color: #ffdb70;
 }
 
