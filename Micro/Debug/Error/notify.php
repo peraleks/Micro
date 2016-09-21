@@ -2,6 +2,10 @@
     if (defined('MICRO_DIR')) {
         $file = str_replace(MICRO_DIR.'/', '', $file);
     }
+    if (defined('MICRO_ERROR_TRACE_COLLAPSE') && MICRO_ERROR_TRACE_COLLAPSE === false)
+         { $collaps = ''; }
+    else { $collaps = 'hidden';}
+
     if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true):
 ?>
 <style>
@@ -221,12 +225,12 @@
     };
 </script>
     <div class="error_box">
-        <div class="<?= $name ?> error_header"><?php echo $code.' '.$name; ?></div>
+        <div class="<?= $name ?> error_header"><?='['.$code.'] '.$name; ?></div>
         <div class="error_text error_content">
         <?= $message ?>
         </div>
-        <div class="trace_wrap">
-        <?= $trace ?>
+        <div class="trace_wrap <?= $collaps ?>">
+        <?= $this->traceResult['display'] ?>
         </div>
         <div class="error_path error_content">
             <div class="but_trace">trace</div>
@@ -237,6 +241,8 @@
 
 <?php         
     endif;
+    if (defined('MICRO_ERROR_LOG') && MICRO_ERROR_LOG === false) { return; }
+
     if (defined('MICRO_ERROR_LOG_FILE')) {
         $log = MICRO_DIR.MICRO_ERROR_LOG_FILE;
         $perm = WEB_DIR.'/error_permission_storage!_!_!_!_!_!_!.log';
@@ -257,7 +263,34 @@
         $this->sendHeaderMessage($file, $message, ' permission');
     } 
     $time = date('Y m d - h:i:s');
-    fwrite($error, '---- '.$time." -------- ".'['.$code.'] '.$name." --------\n"
-        .$message."\n"
-        .$file.'::'.$line."\n\n");
+    fwrite($error, '---- '.$time." ------------- ".'['.$code.'] '
+            .$name." ----\n\n"
+            .$logMess."\n"
+            .$file.'::'.$line."\n\n");
+
+    if (defined('MICRO_ERROR_LOG_TRACE') && MICRO_ERROR_LOG_TRACE === 0) {
+        $tc = &$this->traceResult['inversion'];
+    }
+    else {
+        $tc = &$this->traceResult['log']; 
+    }
+    foreach ($tc as $TraceValue) {
+
+        if (empty($TraceValue['args'])) {
+            fwrite($error, "                    +\n");
+        }
+
+        foreach ($TraceValue['args'] as $ArgsValue) {
+            fwrite($error, '                    + '.$ArgsValue."\n");
+        }
+
+        fwrite($error, '            {f} '.$TraceValue['function']."\n");
+        fwrite($error, '          ====> '.$TraceValue['class']."\n");
+        fwrite($error, $TraceValue['line'].' '
+                      .$TraceValue['file'].' '
+                      .$TraceValue['line']
+                      ."\n\n");
+    }
+    fwrite($error, "\n\n\n");
+
     fclose($error);

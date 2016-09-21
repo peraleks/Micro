@@ -1,7 +1,12 @@
 <?php
 $arr = [];
+$this->traceResult = [];
+$this->traceResult['log'] = [];
+$this->traceResult['display'] = [];
+$this->traceResult['inversion'] = [];
 $argsCount = 0;
 $k = 0;
+
 for ($i = 0; $i < count($trace); ++$i) {
 
 #--------------- file ---------------------------------------------------------
@@ -12,6 +17,7 @@ for ($i = 0; $i < count($trace); ++$i) {
 	}
 	if ($k || $trace[$i]['file'] == $file) {
 		++$k;
+
 		$fileParts = explode('/', $trace[$i]['file']);
 
 		$arr[$i]['file']
@@ -25,6 +31,10 @@ for ($i = 0; $i < count($trace); ++$i) {
 		'<td class="trace_path">'
 		.str_replace(MICRO_DIR.'/', '', implode('/', $fileParts)).$fileSep.'</td>';
 
+			// log-file .......................................................
+		$this->traceResult['log'][$i]['file']
+		=
+		str_replace(MICRO_DIR.'/', '', $trace[$i]['file']);
 
 #--------------- line ---------------------------------------------------------
 		if (!array_key_exists('line', $trace[$i])) {
@@ -36,6 +46,8 @@ for ($i = 0; $i < count($trace); ++$i) {
 
 		$arr[$i]['func'] = '';
 
+			// log-line .......................................................
+		$this->traceResult['log'][$i]['line'] = '::'.$trace[$i]['line'].'::';
 
 #--------------- class --------------------------------------------------------
 		$classSep = '\\';
@@ -47,6 +59,8 @@ for ($i = 0; $i < count($trace); ++$i) {
 
 		$arr[$i]['class'] = '<td class="trace_class">'.array_pop($classParts).'</td>';
 
+			// log-class...................................................
+		$this->traceResult['log'][$i]['class'] = $trace[$i]['class'];
 
 			// nameSpace .....................................................
 		$arr[$i]['nameSpace']
@@ -55,6 +69,7 @@ for ($i = 0; $i < count($trace); ++$i) {
 
 
 			// проверка инверсии FuncToLink ...................................
+		$funcLink = '';
 		if ($trace[$i]['class'] == get_class($this->R)
 			&&
 			$trace[$i]['function'] == '__callStatic')
@@ -71,6 +86,7 @@ for ($i = 0; $i < count($trace); ++$i) {
 		}
 
 
+
 #--------------- function -----------------------------------------------------
 		if (!array_key_exists('function', $trace[$i])) {
 			$trace[$i]['function'] = '';
@@ -82,12 +98,24 @@ for ($i = 0; $i < count($trace); ++$i) {
 		.$arr[$i]['func']
 		.'</td>';
 
+			// log-function....................................................
+		$this->traceResult['log'][$i]['function'] = $trace[$i]['function'];
+
+		if ($funcLink != '') {
+			$this->traceResult['log'][$i]['function'] .= ' ----> {i} '.$funcLink;
+
+			$this->traceResult['inversion'][$i] = &$this->traceResult['log'][$i];
+		}
+
 
 #--------------- args ---------------------------------------------------------
+		$this->traceResult['log'][$i]['args'] = [];
+
 		if (empty($trace[$i]['class']) || $trace[$i]['class'] != $ThisClass) {
 			if (!array_key_exists('args', $trace[$i])) {
 				$trace[$i]['args'] = [];
 			}
+
 			foreach ($trace[$i]['args'] as $Arg) {
 
 					// object .................................................
@@ -100,12 +128,18 @@ for ($i = 0; $i < count($trace); ++$i) {
 							 .implode('\\', $objectParts).'\\'.'</span>';
 
 					$arr[$i]['args'][] = '<td class="trace_args">'.$space.$obj.'</td>';
+
+						// log-args-object.....................................
+					$this->traceResult['log'][$i]['args'][] = get_class($Arg);
 				}
 				
 					// array ..................................................
 				elseif (is_array($Arg)) {
 
 					$arr[$i]['args'][] = '<td  class="trace_args array">[array]</td>';
+
+						// log-args-array.....................................
+					$this->traceResult['log'][$i]['args'][] = '[array]';
 				}
 				else {
 					if (!empty($arr[$i]['func'])) {
@@ -114,6 +148,8 @@ for ($i = 0; $i < count($trace); ++$i) {
 					else {
 						$arr[$i]['args'][] = '<td  class="trace_args">'.$Arg.'</td>';
 					}
+						// log-args-остальные .................................
+					$this->traceResult['log'][$i]['args'][] = $Arg;
 				}
 			}
 			$cnt = count($trace[$i]['args']);
@@ -121,20 +157,14 @@ for ($i = 0; $i < count($trace); ++$i) {
 			?:
 			$argsCount = $cnt;
 		}
-		 // очистка последнего вызова от лишней информации
-		if ($trace[$i]['class'] == $ThisClass) {
-			  $arr[$i]['class']     = '<td></td>';
-			  $arr[$i]['function']  = '<td></td>';
-			  $arr[$i]['nameSpace'] = '<td></td>';
-		}
 	}
 }
 $l = 1;
-$traceResult = '';
-$traceResult .= '<table class="micro_trace">';
+$this->traceResult['display'] = '';
+$this->traceResult['display'] .= '<table class="micro_trace">';
 foreach ($arr as  $ArrValue) {
 
-	$traceResult .= '<tr class="color'.($l = $l*-1).'">'
+	$this->traceResult['display'] .= '<tr class="color'.($l = $l*-1).'">'
 					.$ArrValue['path']
 					.$ArrValue['line']
 					.$ArrValue['file']
@@ -147,11 +177,11 @@ foreach ($arr as  $ArrValue) {
 	}
 	for ($k = 0; $k < $argsCount; ++$k) {
 		if (array_key_exists($k, $ArrValue['args'])) {
-			$traceResult .= $ArrValue['args'][$k];
+			$this->traceResult['display'] .= $ArrValue['args'][$k];
 		}
 		else {
-			$traceResult .= '<td class="trace_args"></td>';
+			$this->traceResult['display'] .= '<td class="trace_args"></td>';
 		}
 	}
 }
-$traceResult .= '</table>';
+$this->traceResult['display'] .= '</table>';

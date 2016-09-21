@@ -12,7 +12,9 @@ class ErrorHandler
 
     private $headerMessageDefault = [];
 
-    private function getErrorName($error){
+    private $traceResult;
+
+    private function getErrorName($error) {
         $errors = [
             E_ERROR             => 'ERROR',
             E_WARNING           => 'WARNING',
@@ -71,13 +73,15 @@ class ErrorHandler
         $file    = $args[2];
         $line    = $args[3];
 
+        $this->traceHandler(debug_backtrace(), $file);
+
         $this->notify(
                         $code,
                         $name,
                         $message,
+                        $message,
                         $file,
-                        $line,
-                        $this->traceHandler(debug_backtrace(), $file)
+                        $line
                      );
 
         return true;
@@ -116,16 +120,17 @@ class ErrorHandler
         foreach ($trace as $TraceValue) {
              $traceArr[] = $TraceValue;
         }
-        // \d::p($traceArr);
+        $this->traceHandler( $traceArr, $file);
+
         $this->traceHandler( $traceArr, $file);
 
         $this->notify(
                         $code,
                         $name,
                         $message,
+                        $message,
                         $file,
-                        $line,
-                        $this->traceHandler( $traceArr, $file)
+                        $line
                      );
 
         return true;
@@ -136,7 +141,8 @@ class ErrorHandler
     {
         $code    = $obj->getCode();
         $name    = 'Micro_Exception';
-        $message = $obj->getMessage();
+        $message = $obj->getMessage()['displayError'];
+        $logMess = $obj->getMessage()['logError'];
         $trace   = $obj->getTrace();
 
         if (!isset($trace[$traceNumber]['file'])) {
@@ -147,13 +153,15 @@ class ErrorHandler
             $file = $trace[$traceNumber]['file'];
             $line = $trace[$traceNumber]['line'];
         }
+        $this->traceHandler(debug_backtrace(), $file);
+
         $this->notify(
                         $code,
                         $name,
                         $message,
+                        $logMess,
                         $file,
-                        $line,
-                        $this->traceHandler(debug_backtrace(), $file)
+                        $line
                      );
     }
 
@@ -163,13 +171,15 @@ class ErrorHandler
 
             ob_end_clean();
 
+            $this->traceHandler(debug_backtrace(), $error['file']);
+
             $this->notify(
                            $error['type'],
                            $this->getErrorName($error['type']),
                            $error['message'],
+                           $error['message'],
                            $error['file'],
-                           $error['line'],
-                           ''
+                           $error['line']
                          );
             $this->sendHeaderMessage($error['file'], $error['message']);
         }
@@ -227,7 +237,7 @@ class ErrorHandler
     }
 
 
-    private function notify($code, $name, $message, $file, $line, $trace)
+    private function notify($code, $name, $message, $logMess, $file, $line)
     {
         include(__DIR__.'/notify.php');
     }
@@ -239,6 +249,5 @@ class ErrorHandler
 
         include(__DIR__.'/trace.php');
 
-        return $traceResult;
     }
 }

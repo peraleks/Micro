@@ -12,29 +12,43 @@ class MicroException extends \Exception
 						'#' => '#',
 					 ];
 
-	public function __construct(int $num, array $m, $traceNumber) {
-		$this->message = $this->prepareMessage($num, $m);
+	public function __construct(int $num, array $replace, $traceNumber) {
+		$this->message = $this->prepareMessage($num, $replace);
 		$this->code = $this->exceptionCode." $num";
 		ErrorHandler::instance()->microException($this, $traceNumber);
 	}
 
-	protected function prepareMessage(int $num, array $m) {
+	protected function prepareMessage(int $num, array $replace) {
 		if (defined('MICRO_LOCALE') && MICRO_LOCALE == 'en') {
 			$locale = 'en';
 		} else {
 			$locale = 'ru';
 		}
-		$mess = $this->$locale[$num];
+		$logError = $this->$locale[$num];
 
 		foreach ($this->css as $CssKey => $CssValue) {
-			for ($i = 0; $i < count($m); $i++) {
-				if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) {
-					$mDec = $this->decor($m[$i], $CssKey);
-	            }
-				$mess = str_replace($CssKey.$i.$CssValue, $mDec, $mess);
+			foreach ($replace as $ReplaceKey => $ReplaceValue) {
+
+	            $logError = str_replace($CssKey.$ReplaceKey.$CssValue, $ReplaceValue, $logError);
 			}
 		}
-		return $mess;
+		$result['logError'] = $logError;
+
+		if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) {
+
+			$displayError = $this->$locale[$num];
+
+			foreach ($this->css as $CssKey => $CssValue) {
+				foreach ($replace as $ReplaceKey => $ReplaceValue) {
+
+					$displayError = str_replace($CssKey.$ReplaceKey.$CssValue,
+										$this->decor($ReplaceValue, $CssKey),
+										$displayError);
+				}
+			}
+			$result['displayError'] = $displayError;
+        }
+		return $result;
 	}
 
 	protected function decor($param, $CssKey)

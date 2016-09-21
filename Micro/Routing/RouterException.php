@@ -52,8 +52,8 @@ class RouterException extends MicroException
 		8 => "Unable to include file {0}",
 	];
 
-	public function __construct(int $num, array $m, $traceNumber = 0) {
-		parent::__construct($num, $m, $traceNumber);
+	public function __construct(int $num, array $replace, $traceNumber = 0) {
+		parent::__construct($num, $replace, $traceNumber);
 		// \d::p($this);
 	}
 }
