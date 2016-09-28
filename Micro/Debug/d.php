@@ -7,7 +7,7 @@ class d
 	public static function m()
 	{
 		if (!defined('MICRO_MEMORY')) {
-			define('MICRO_MEMORY', memory_get_usage());;
+			define('MICRO_MEMORY', memory_get_usage());
 		}
 		$mem = (memory_get_usage() - MICRO_MEMORY) / 1000;
 		$time =	round(((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000), 1);
@@ -16,9 +16,16 @@ class d
 		$file = $deb[0]['file'];
 		$line = $deb[0]['line'];
 
+		if (!array_key_exists('MICRO_LOADER', $GLOBALS)) {
+			$loader = 'composer';
+		}
+		else {
+			$loader = $GLOBALS['MICRO_LOADER'];
+		}
+
 		echo
 		"<div title=\"$file::$line\" style=\"".self::$s['time_main']."\">
-			<b style=\"color: green; font-size: 1.2em;\">{$GLOBALS['MICRO_LOADER']}</b> al<br>
+			<b style=\"color: green; font-size: 1.2em;\">{$loader}</b> al<br>
 			<b style=\"color: blue; font-size: 1.2em;\">$time</b> ms<br>
 			<b style=\"color: red; font-size: 1.2em;\">$mem</b> kb<br>
 		</div>";
