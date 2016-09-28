@@ -1,20 +1,18 @@
 <?php
-namespace MicroMir\Routing;
+namespace MicroMir\Root;
 
-class RouterController
+class RootController
 {
     private $route;
 
     public $nSpace;
-
-    private $R;
 
     public function __construct($R)
     {
         $this->R = $R;
     }
 
-    public function match()
+    public function matchUrl()
     {
 
         $this->route
@@ -42,7 +40,9 @@ class RouterController
                 catch (\Error $e)
                 {
                     $this->default404();
-                    new RouterException(27, [$e->getMessage(), $e->getFile(), $e->getLine()], '404');
+                    new RouterException(6, [$e->getMessage(),
+                                            $e->getFile(),
+                                            $e->getLine()], '404');
                 }
                 return;
             }
@@ -54,6 +54,7 @@ class RouterController
             $this->default404();
         }
         else {
+            $GLOBALS['MICRO_ERROR_MARKER'] = 1;
             $action = $this->route['action'];
             (new $this->route['controller']($this->R, $this->route['params']))
                                   ->$action($this->R, $this->route['params']);

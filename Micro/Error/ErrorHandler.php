@@ -1,6 +1,6 @@
 <?php
 
-namespace MicroMir\Debug\Error;
+namespace MicroMir\Error;
 
 class ErrorHandler
 {
@@ -8,9 +8,9 @@ class ErrorHandler
 
     private $R;
 
-    private $headerMessage = [];
+    private $headerMessages = [];
 
-    private $headerMessageDefault = [];
+    private $headerMessagesDefault = [];
 
     private $traceResult;
 
@@ -47,10 +47,9 @@ class ErrorHandler
 
         register_shutdown_function([$this, 'fatalError']);
 
-        $this->headerMessageDefault['header'] = '500 Internal Server Error';
-        $this->headerMessageDefault['space']  = "@_#_@_%_@_#_@";
-        $this->headerMessageDefault['en']     = "Don't worry!<br>Chip 'n Dale Rescue Rangers";
-        $this->headerMessageDefault['ru']     = "Сервер отдыхает. Зайдите позже";
+        $this->headerMessagesDefault['header'] = '500 Internal Server Error';
+        $this->headerMessagesDefault['en']     = "Don't worry!<br>Chip 'n Dale Rescue Rangers";
+        $this->headerMessagesDefault['ru']     = "Сервер отдыхает. Зайдите позже";
    }
 
     static public function instance()
@@ -97,15 +96,15 @@ class ErrorHandler
 
         if ($args instanceof \ParseError) {
             $code = 4;
-            $this->sendHeaderMessage($file, $message);
+            $this->sendHeaderMessage();
         }
         elseif ($args instanceof \Error) {
             $code = 1; 
-            $this->sendHeaderMessage($file, $message);
+            $this->sendHeaderMessage();
         }
         elseif ($args instanceof \Exception && $code == 0) {
             $code = 3;
-            $this->sendHeaderMessage($file, $message);
+            $this->sendHeaderMessage();
         }
 
         $name = $this->getErrorName($code);
@@ -181,45 +180,46 @@ class ErrorHandler
                            $error['file'],
                            $error['line']
                          );
-            $this->sendHeaderMessage($error['file'], $error['message']);
+            $this->sendHeaderMessage();
         }
     }
 
 
-    public function setHeaderMessage($array = null) {
+    public function setHeaderMessage($array = null)
+    {
         if ($array === null) {
             $this->errorParam('empty parametrs');
             return $this;
         }
-        if (!array_key_exists('dir', $array)) {
-            $this->errorParam("missing key 'dir'");
+        if (!array_key_exists('marker', $array)) {
+            $this->errorParam("missing key 'marker'");
             return $this;
         }
-        $this->headerMessage[$array['dir']] = array_merge($this->headerMessageDefault, $array);
+        $this->headerMessages[$array['marker']] = array_merge($this->headerMessagesDefault, $array);
 
         return $this;
     }
 
-    private function errorParam($params) {
+    private function errorParam($params)
+    {
         $deb = debug_backtrace()[1];
         $this->notify(2, 'USER_WARNING', $params, $deb['file'], $deb['line']);
     }
 
-    private function sendHeaderMessage($file, $mess, $err = null) {
+    private function sendHeaderMessage()
+    {
         if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) return;
 
-        $arr = $this->headerMessageDefault;
-
-        foreach ($this->headerMessage as $headerMessageKey => $headerMessageValue) {
-
-            if (preg_match('#^'.$headerMessageKey.'.*#', $file)
-                ||
-                preg_match("#^.*?".$headerMessageValue['space'].".*#", $mess))
-            {
-                $arr  = $headerMessageValue;
-                break;
-            }
+        if (array_key_exists('MICRO_ERROR_MARKER', $GLOBALS)
+            &&
+            array_key_exists($GLOBALS['MICRO_ERROR_MARKER'], $this->headerMessages))
+        {
+            $arr = $this->headerMessages[$GLOBALS['MICRO_ERROR_MARKER']];
         }
+        else {
+            $arr = $this->headerMessagesDefault;
+        }
+
         $number  = explode(' ', $arr['header'])[0];
 
         if (defined('MICRO_LOCALE') && MICRO_LOCALE == 'en') {

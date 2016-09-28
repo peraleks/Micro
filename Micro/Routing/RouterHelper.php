@@ -4,9 +4,11 @@ namespace MicroMir\Routing;
 
 class RouterHelper
 {
+	// private $RootController;
 
 	public function __construct($R) {
-		$this->R = $R;
+		$this->RootController = $R->RootController;
+		$this->Router 		  = $R->Router;
 	}
 
 	// public function __call($name, $params) {
@@ -19,7 +21,7 @@ class RouterHelper
 
 	public function getUrl($name) {
 
-		$space = $this->R->RouterController->nSpace;
+		$space = $this->RootController->nSpace;
 
 		$cntName = count($nameParts = explode('/', $name));
 
@@ -27,7 +29,7 @@ class RouterHelper
 			if ($space) {
 				$space .= '/';
 			}
-			return $this->R->Router->getByNamespace($space.$name)['route'];
+			return $this->Router->getByNamespace($space.$name)['route'];
 		}
 		if ($space) {
 			$cntSpace = count($spaceParts = explode('/', $space));
@@ -39,7 +41,7 @@ class RouterHelper
 			}
 
 		}
-		return $this->R->Router->getByNamespace($name)['route'];
+		return $this->Router->getByNamespace($name)['route'];
 
 	}
 

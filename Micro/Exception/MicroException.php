@@ -1,7 +1,7 @@
 <?php
 namespace MicroMir\Exception;
 
-use MicroMir\Debug\Error\ErrorHandler;
+use MicroMir\Error\ErrorHandler;
 
 class MicroException extends \Exception
 {
