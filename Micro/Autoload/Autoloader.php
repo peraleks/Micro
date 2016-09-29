@@ -3,34 +3,35 @@
 class Autoloader
 {
     /**
-     * Карта пространсв имён
+     * Пространсва имён. 
      * 
      * @var array
      */
-    private $spaceMap = [];
+    private $nameSpaceArray = [];
 
     /**
-     * Карта отдельных классов в глобальном пространстве имён
+     * Имена отдельных классов в глобальном пространстве имён
+     * Ссылки на $classFile
      * 
      * @var array
      */
-    private $classMap = [];
+    private $className = [];
 
     /**
-     * Содержит ссылку на карту ($lastMap | $spaceMap),
-     * в которую производилась запись в последний раз
+     * Содержит полные пути файлов для $className
+     *
+     * @var array
+     */
+    private $classFile = [];
+
+    /**
+     * Содержит ссылку на элемент $nameSpaceArray,
+     * в который была произведена последняя запись пути
+     * для данного пространства имён
      * 
      * @var array
      */
-    private $lastMap;
-
-    /**
-     * Первый элемент пространства имён, разбитого по '/',
-     * или имя класса в глобальном пространстве имён
-     * 
-     * @var string
-     */
-    private $space;
+    private $lastArray;
 
     /**
      * Корневая директория приложения
@@ -39,11 +40,18 @@ class Autoloader
      */
     private $baseDir;
 
+    /**
+     * Счётчик подключеных файлов
+     * 
+     * @var integer $al
+     */
     public $al;
 
     /**
-     * Регистрирует функцию автозагрузчика и
-     * и корневую директорию
+     * Регистрация автозагрузчика,
+     * определение корневой директории приложения
+     * 
+     * @var string $baseDir     Корневая директория приложения
      */
     public function __construct($baseDir)
     {
@@ -53,168 +61,168 @@ class Autoloader
     }
 
     /**
-     * Добавляет в массив $spaceMap пространство имён и путь
+     * Добавляет в массив $nameSpaceArray пространство имён и путь
      * 
-     * @param string $name  пространство имён
-     * @param string $path  путь   
-     * @return object($this)
+     * @param  string       $name    пространство имён
+     * @param  string|array $path    путь   
+     * @return this
      */
     public function space($name, $path)
     {
-        $this->lastMap = &$this->spaceMap;
-        $this->spaceMap['lastName'] = $name;
-        $this->arrayExists($name);
-        if (is_array($path)) {
-            foreach ($path as $value) {
-                $this->spaceMap[$name]['path'][] .= $value;
+        $nameParts = explode('\\', $name);
+
+        $arrayLevel = &$this->nameSpaceArray;
+
+        foreach ($nameParts as $NamePartsValue) {
+
+            if (!array_key_exists($NamePartsValue, $arrayLevel)) {
+                $arrayLevel[$NamePartsValue] = [];
             }
-        } else {
-            $this->spaceMap[$name]['path'][] .= $path;
+            $arrayLevel = &$arrayLevel[$NamePartsValue];
+        }
+        $arrayLevel[0] = [];
+
+        if (is_array($path)) {
+            foreach ($path as $PathValue) {
+
+                $arrayLevel[0][] .= $PathValue;
+            }
+        }
+        else {
+            $arrayLevel[0][] .= $path;
+        }
+
+        $arrayLevel[1] = $name;
+
+        $this->lastArray = &$arrayLevel;
+
+        return $this;
+    }
+
+    /**
+     * Добавляет в массив $className имя глобального класса
+     * и в $classFile путь к файлу
+     * 
+     * @param  string $file      полный путь с расширением файла
+     * @param  string $class     имя класса
+     * @return this
+     */
+    public function globalClass($file, $class)
+    {
+        $this->classFile[$file] = $file;
+
+        foreach ($class as $ClassValue) {
+
+            $this->className[$ClassValue] = &$this->classFile[$file];
         }
 
         return $this;
     }
 
     /**
-     * Добавляет в массив $classMap имя глобального класса
-     * и  путь к содержащей папке
+     * Устанавливает флаг расширенного поиска
+     * Вслучае неудачного поиска в директориях,
+     * которые определены в элементе массива [0]
+     * данного пространства имён, поиск будет произведён 
+     * по цепочке лоадеров, если таковые зарегистрированы
      * 
-     * @param string $path  путь содержащий имя класса(файла без расширения)
-     * @return object($this)
+     * @return this
      */
-    public function globalClass($path)
+    public function next()
     {
-        $this->lastMap = &$this->classMap;
-        if (is_array($path)) {
-            foreach ($path as $value) {
-                $this->classArray($value);
-            }
-        } else {
-            $this->classArray($path);
+        $this->lastArray[2] = '';
+
+        return $this;
+    }
+
+    /**
+     * Лоадер
+     * 
+     * @param  string $nameSpace    полное имя класса
+     * @return void
+     */
+    private function microLoader($nameSpace)
+    {
+        $classNameParts = explode('\\', $nameSpace);
+
+        if (count($classNameParts) == 1) {
+            $this->includeGlobalClass($classNameParts[0]);
+            return;
         }
 
-        return $this;
-    }
+        $arrayLevel = &$this->nameSpaceArray;
 
-    /**
-     * Добавляет в массив $classMap имя глобального класса
-     * и  путь к содержащей папке
-     * Вынесен повторяющийся код из globalClass()
-     * 
-     * @param string $path  путь содержащий имя класса(файла без расширения) 
-     * @return void
-     */
-    private function classArray($path) {
-        $arr = explode('/', $path);
-        $name = array_pop($arr);
-        $this->classMap['lastName'] = $name;
-        $this->arrayExists($name);
-        $this->classMap[$name]['path'][] .= implode('/', $arr);
-    }
+        foreach ($classNameParts as $ClassNamePartsValue) {
 
-    /**
-     * Устанавливает флаг ограничения поиска
-     * Поиск будет производится только в тех 
-     * директориях, которые содежатся в подмассиве 'path'
-     * массива данного пространства имён
-     * 
-     * @return object($this)
-     */
-    public function strict()
-    {
-        $this->lastMap[$this->lastMap['lastName']]['strict'] = true;
-
-        return $this;
-    }
-
-    /**
-     * Инициализирует подмассивы пространств имен | классов
-     * и подмассивы 'path' в них
-     *   
-     * @param string $name  пространство имён или имя класса
-     * @return void
-     */
-    private function arrayExists($name)
-    {
-        array_key_exists($name, $this->lastMap)
-        ?:
-        $this->lastMap[$name] = [];
-
-        array_key_exists('path', $this->lastMap[$name])
-        ?:
-        $this->lastMap[$name]['path'] = [];
-    } 
-
-    /**
-     * Зарегистрированная функция автозагрузчика
-     * Реализует логику автозагрузки
-     * 
-     * @param string $className пространство имён
-     * @return void
-     */
-    private function microLoader($className)
-    {
-        $explName = explode('\\', $className);
-        $this->space = array_shift($explName);
-        if (empty($explName)) {
-            if (array_key_exists($this->space, $this->classMap)) {
-                $this->includeFile($this->space, $this->classMap, true);
-            } else {
-                $this->globalName();
+            if (!array_key_exists($ClassNamePartsValue, $arrayLevel)) {
+                break;
             }
-        } elseif (array_key_exists($this->space, $this->spaceMap)) {
-            $this->includeFile(implode('/', $explName), $this->spaceMap);
+            else {
+                $arrayLevel = &$arrayLevel[$ClassNamePartsValue];
+
+                if (array_key_exists(0, $arrayLevel)) {
+
+                    $spaceEnd
+                    =
+                    str_replace('\\', '/', str_replace($arrayLevel[1], '', $nameSpace));
+
+                    $this->includeFile($arrayLevel, $spaceEnd);
+                }
+            }
         }
     }
 
     /**
      * Подключает файлы
-     * Если присутствует флаг 'strict', проверка на наличие файла будет произведена
-     * по всем записям, присутствующим в массиве 'path', кроме последней,
-     * a последняя запись будет использована для подключения файла
-     * без проверки на его наличие
-     * При отсутствии флага 'strict', будет произведена проверка 
-     * на наличие файла для всех записей в массиве 'path'
-     * и файл не будет подключен если не был найден
+     * 
+     * При отсутствии ключа '2' в $arrayLevel, файл будет подключен
+     * без предварительной проверки на наличие такового.
+     * Иначе если ключ '2' есть - будет произведена проверка 
+     * на наличие файла для всех путей в $arrayLevel[0].
+     * Вслучае неудачи, поиск будет произведён 
+     * по цепочке лоадеров, если таковые зарегистрированы
      *  
      * @param string $class         имя класса
-     * @param array $map            $lastMap | $spaceMap            
+     * @param array $map            $lastArray | $nameSpaceArray            
      * @param bool $global          флаг глобального пространства
      * @return void
      */
-    private function includeFile($class, $map, $global = false)
+    private function includeFile(&$arrayLevel, $spaceEnd)
     {
-        $count = count($map[$this->space]['path']) - 1;
-        for ($i = 0; $i <= $count; ++$i) {
-            $path = $this->baseDir.$map[$this->space]['path'][$i].'/'.$class.'.php';
-            if (($i == $count) && array_key_exists('strict', $map[$this->space])) {
+        for ($i = 0; $i < count($arrayLevel[0]); ++$i) {
+
+            $file = $this->baseDir.$arrayLevel[0][$i].'/'.$spaceEnd.'.php';
+
+            if (($i == (count($arrayLevel[0]) - 1)) && !array_key_exists(2, $arrayLevel)) {
+                include $file;
                 ++$this->al;
-                include $path;
                 return;
             }
             else {
-                ++$this->al;
-                if (file_exists($path)) {
-                    include $path;
+                if (file_exists($file)) {
+                    include $file;
+                    ++$this->al;
                     return;
                 }
             }
         }
-        !$global ?: $this->globalName();
     }
 
     /**
-     * Подключение глобального класса из папки глобального пространства имён,
-     * если она определена в $spaceMap по ключу ''
-     *   
+     * Подключение глобального класса.
+     * 
+     * @param  string $className  имя класса без пространства имён  
      * @return void
      */
-    private function globalName()
+    private function includeGlobalClass($className)
     {
-        if (array_key_exists('', $this->spaceMap)) {
-            $class = $this->space;
-            $this->space = '';
-            $this->includeFile($class, $this->spaceMap);
+        if (array_key_exists($className, $this->className)) {
+            ++$this->al;
+            include $this->baseDir.$this->className[$className];
+            return;
+        }
+        elseif (array_key_exists('', $this->nameSpaceArray)) {
+            $this->includeFile($this->nameSpaceArray[''], $className);
         }
     }
 }
