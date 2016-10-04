@@ -141,11 +141,15 @@
     }
 
     div.trace_wrap tr:active {
-        background-color: #111 !important;
+        background-color: #000 !important;
     }
 
     div.trace_wrap {
         min-width: 100%;
+    }
+
+    div.trace_wrap tr{
+        line-height: 1.8em;
     }
 
     div.trace_wrap tr.color1{
@@ -153,9 +157,7 @@
     }
 
     div.trace_wrap td {
-        padding: 1px;
         white-space: nowrap;
-        padding: 0.4em 0;
         text-align: center;
     }
 
@@ -172,7 +174,8 @@
 
     div.trace_wrap td.trace_line {
         color: #ffff7b;
-        padding: 0 7px;
+        padding-left: 7px;
+        padding-right: 7px;
     }
 
     div.trace_wrap td.trace_class, span.trace_class {
@@ -188,13 +191,15 @@
     }
 
     div.trace_wrap td.trace_function {
-        padding:  0 5px;
+        padding-left: 5px;
+        padding-right: 5px;
         color: #ffdb70;
     }
 
     div.trace_wrap td.trace_args {
         border-left: 1px solid #333;
-        padding: 0 3px;
+        padding-left: 3px;
+        padding-right: 3px;
         color: #f9f9ca;
     }
 

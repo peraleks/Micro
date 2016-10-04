@@ -3,8 +3,6 @@ namespace MicroMir\Routing;
 
 class Router
 {
-    private static $instance;
-
     private $routes = [];
 
     private $simple = [];
@@ -32,19 +30,7 @@ class Router
     private $last = false;
 
 
-
-    public static function instance()
-    {
-        self::$instance
-        ?:
-        self::$instance = new self;
-
-        return self::$instance;
-    }
-
-    private function __construct() {}
-
-    public function init(array $arr, $safe = 1)
+    public function __construct(array $arr, $safe = 1)
     {
         $safe == 'notSafe'
         ?
@@ -52,7 +38,7 @@ class Router
         :
         $this->safeMode = 1;
 
-        $this->page404['404']    = '';
+        $this->page404['code404']    = '';
         $this->page404['nSpace'] = '';
         
         foreach ($arr as $path) {
@@ -570,7 +556,7 @@ class Router
 
     public function matchUrl($url, $method)
     {
-        $url = parse_url($url, PHP_URL_PATH);
+        $url = parse_url($url, PHP_URL_PATH); #????????????????????????????????????????????
 
         $url == '/'
         ?:
@@ -649,7 +635,7 @@ class Router
         if ($requestUri != $url) {
             return $this;
         }
-        if (array_key_exists('404', $this->matchUrl($url, 'GET'))){
+        if (array_key_exists('code404', $this->matchUrl($url, 'GET'))){
             include __DIR__.'/list/list.php';
         }
 
