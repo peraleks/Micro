@@ -6,13 +6,13 @@ class ErrorHandler
 {
     static private $instance;
 
-    private $R;
+    private $R; // требуется для include(__DIR__.'/trace.php')
 
     private $headerMessages = [];
 
     private $headerMessagesDefault = [];
 
-    private $traceResult;
+    private $traceResult; // требуется для include(__DIR__.'/trace.php')
 
     private function getErrorName($error) {
         $errors = [
@@ -47,9 +47,9 @@ class ErrorHandler
 
         register_shutdown_function([$this, 'fatalError']);
 
-        $this->headerMessagesDefault['header'] = '500 Internal Server Error';
-        $this->headerMessagesDefault['en']     = "Don't worry!<br>Chip 'n Dale Rescue Rangers";
-        $this->headerMessagesDefault['ru']     = "Сервер отдыхает. Зайдите позже";
+        $this->headerMessagesDefault['header']  = '500 Internal Server Error';
+        $this->headerMessagesDefault['message'] = "Сервер отдыхает. Зайдите позже.<br>
+                                                   Don't worry!<br>Chip 'n Dale Rescue Rangers";
    }
 
     static public function instance()
@@ -195,7 +195,9 @@ class ErrorHandler
             $this->errorParam("missing key 'marker'");
             return $this;
         }
-        $this->headerMessages[$array['marker']] = array_merge($this->headerMessagesDefault, $array);
+        $this->headerMessages[$array['marker']]
+        =
+        array_merge($this->headerMessagesDefault, $array);
 
         return $this;
     }
@@ -206,7 +208,7 @@ class ErrorHandler
         $this->notify(2, 'USER_WARNING', $params, $deb['file'], $deb['line']);
     }
 
-    private function sendHeaderMessage()
+    private function sendHeaderMessage($phrase = '')
     {
         if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) return;
 
@@ -220,20 +222,18 @@ class ErrorHandler
             $arr = $this->headerMessagesDefault;
         }
 
-        $number  = explode(' ', $arr['header'])[0];
-
-        if (defined('MICRO_LOCALE') && MICRO_LOCALE == 'en') {
-            $message = $arr['en'];
-        }
-        else {
-            $message = $arr['ru'];
-        }
+        $statusCode = explode(' ', $arr['header'])[0];
+        $message = $arr['message'];
 
         if (!headers_sent()) {
             header($_SERVER['SERVER_PROTOCOL'].' '.$arr['header']);
         }
-
-        include(__DIR__.'/500.php');
+        if (defined('MICRO_ERROR_PAGE')) {
+            include MICRO_ERROR_PAGE;
+        }
+        else {
+            include(__DIR__.'/500.php');
+        }
     }
 
 

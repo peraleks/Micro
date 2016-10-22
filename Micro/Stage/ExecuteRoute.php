@@ -22,7 +22,7 @@ class ExecuteRoute
 
 			if (property_exists($this->Route, 'code404')) {
 
-				if (!headers_sent()) {
+				if (! headers_sent()) {
 					header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');
 				}
 

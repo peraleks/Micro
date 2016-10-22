@@ -248,27 +248,23 @@
     endif;
     if (defined('MICRO_ERROR_LOG') && MICRO_ERROR_LOG === false) { return; }
 
-    if (defined('MICRO_ERROR_LOG_FILE')) {
-        $log = MICRO_DIR.MICRO_ERROR_LOG_FILE;
-        $perm = WEB_DIR.'/error_permission_storage!_!_!_!_!_!_!.log';
-    }
-    else {
-        $log = __DIR__.
-        '/../../../../../../storage/logs/error_SETTINGS_!_!_!_!_!_!_!_!.log';
-        $perm = __DIR__.
-        '/../../../../../../error_permission_storage!_!_!_!_!_!_!.log';
-        $this->sendHeaderMessage($file, $message, ' settings');
-    }
+    defined('MICRO_ERROR_LOG_FILE')
+    ?
+    $log = MICRO_ERROR_LOG_FILE
+    :
+    $log = WEB_DIR.'/errors_!_!_'.md5(WEB_DIR).'.log';
+    $perm = WEB_DIR.'/error_permission_storage_!_!_'.md5(WEB_DIR).'.log';
 
-    if (!$error = @fopen($log, 'ab')) {
-        if (!$error = @fopen($perm, 'ab')) {
-            $this->sendHeaderMessage($file, $message, ' permission');
+    if (! $errorlog = @fopen($log, 'ab')) {
+        if (! $errorlog = @fopen($perm, 'ab')) {
+            $this->sendHeaderMessage('permission');
             return;
         }
-        $this->sendHeaderMessage($file, $message, ' permission');
+        $this->sendHeaderMessage('permission');
     } 
-    $time = date('Y m d - h:i:s');
-    fwrite($error, '---- '.$time." ------------- ".'['.$code.'] '
+    $time = date('Y m d - H:i:s');
+
+    fwrite($errorlog, '---- '.$time." ------------- ".'['.$code.'] '
             .$name." ----\n\n"
             .$logMess."\n"
             .$file.'::'.$line."\n\n");
@@ -282,20 +278,20 @@
     foreach ($tc as $TraceValue) {
 
         if (empty($TraceValue['args'])) {
-            fwrite($error, "                    +\n");
+            fwrite($errorlog, "                    +\n");
         }
 
         foreach ($TraceValue['args'] as $ArgsValue) {
-            fwrite($error, '                    + '.$ArgsValue."\n");
+            fwrite($errorlog, '                    + '.$ArgsValue."\n");
         }
 
-        fwrite($error, '            {f} '.$TraceValue['function']."\n");
-        fwrite($error, '          ====> '.$TraceValue['class']."\n");
-        fwrite($error, $TraceValue['line'].' '
+        fwrite($errorlog, '            {f} '.$TraceValue['function']."\n");
+        fwrite($errorlog, '          ====> '.$TraceValue['class']."\n");
+        fwrite($errorlog, $TraceValue['line'].' '
                       .$TraceValue['file'].' '
                       .$TraceValue['line']
                       ."\n\n");
     }
-    fwrite($error, "\n\n\n");
+    fwrite($errorlog, "\n\n\n");
 
-    fclose($error);
+    fclose($errorlog);

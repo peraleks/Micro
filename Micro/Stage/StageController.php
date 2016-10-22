@@ -25,8 +25,18 @@ class StageController
 
 	public function run()
 	{
-		foreach ($this->stages as $StagesValue) {
-			$this->R->$StagesValue->performStage();
-		}
+		$this->stages = array_reverse($this->stages);
+
+		$this->stagesPop();
+
+	}
+
+	private function stagesPop()
+	{
+		if (! $stage = array_pop($this->stages)) return;
+
+		if ($this->R->$stage->performStage()) return;
+
+		$this->stagesPop();
 	}
 }

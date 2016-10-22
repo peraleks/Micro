@@ -8,6 +8,7 @@ class FillRoute
 		$this->RouterHost = $R->RouterHost->init(MICRO_DIR.'/app/config/hosts.php');
 		$this->Route 	  = $R->Route;
 		$this->Request 	  = $R->Request;
+		// \d::p($this->Request);
 	}
 
 	public function performStage()

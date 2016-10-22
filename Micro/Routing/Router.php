@@ -38,8 +38,8 @@ class Router
         :
         $this->safeMode = 1;
 
-        $this->page404['code404']    = '';
-        $this->page404['nSpace'] = '';
+        $this->page404['code404'] = '';
+        $this->page404['nSpace']  = '';
         
         foreach ($arr as $path) {
             $this->inclusion($path);
