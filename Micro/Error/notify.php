@@ -211,6 +211,10 @@
         color: #ccc;
     }
 
+    div.trace_wrap td.trace_args .end {
+        color: #f55;
+    }
+
     div.trace_wrap table.micro_trace .trace_func {
         color: #f981f3;
     }

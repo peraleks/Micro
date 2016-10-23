@@ -142,6 +142,17 @@ for ($i = 0; $i < count($trace); ++$i) {
 					$this->traceResult['log'][$i]['args'][] = '[array]';
 				}
 				else {
+					if (is_string($Arg)) {
+
+						mb_strlen($Arg) > 80
+						?
+						$end = '<span class="trace_args end">...</span>'
+						:
+						$end = '';
+
+						$Arg = htmlentities(mb_substr($Arg, 0, 80), ENT_SUBSTITUTE).$end;
+					}
+
 					if (!empty($arr[$i]['func'])) {
 						$arr[$i]['args'][] = '<td  class="trace_args trace_func">'.$Arg.'</td>';
 					}

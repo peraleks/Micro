@@ -11,6 +11,8 @@ class ExecuteRoute
 
 		public function performStage()
 		{
+
+			\d::p($this->Route);
 			if (property_exists($this->Route, 'code404_host')) {
 
 				new ExecuteRouteException(0, [$this->Route->code404_host]);

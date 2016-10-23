@@ -10,33 +10,40 @@ class StageController
 	public function __construct($R)
 	{
 		$this->R = $R;
+		$this->Emitter = $R->Emitter;
 	}
 
 	public function add($name)
 	{
-		if (array_key_exists($name, $this->stages)) {
-			new StageControllerException(0, [$name]);
-			return $this;
-		}
-		$this->stages[$name] = $name;
+		$this->stages[] = $name;
 
 		return $this;
+	}
+
+	public function afterEach($name)
+	{
+
 	}
 
 	public function run()
 	{
 		$this->stages = array_reverse($this->stages);
 
-		$this->stagesPop();
+		$this->nextStage();
 
 	}
 
-	private function stagesPop()
+	private function nextStage()
 	{
 		if (! $stage = array_pop($this->stages)) return;
 
-		if ($this->R->$stage->performStage()) return;
+		if ($response = $this->R->$stage->performStage()) {
 
-		$this->stagesPop();
+			$this->Emitter->emit($response);
+			
+			return;
+		}
+
+		$this->nextStage();
 	}
 }
