@@ -5,7 +5,7 @@ class StageController
 {
 	private $stages = [];
 
-	private $indicator;
+	private $after = [];
 
 	public function __construct($R)
 	{
@@ -13,16 +13,18 @@ class StageController
 		$this->Emitter = $R->Emitter;
 	}
 
-	public function add($name)
+	public function stage($name)
 	{
 		$this->stages[] = $name;
 
 		return $this;
 	}
 
-	public function afterEach($name)
+	public function afterResponse($name)
 	{
+		$this->after[] = $name;
 
+		return $this;
 	}
 
 	public function run()
@@ -35,10 +37,15 @@ class StageController
 
 	private function nextStage()
 	{
-		if (! $stage = array_pop($this->stages)) return;
+		if (! $stage = array_pop($this->stages)) {
+			if (! $this->stages = array_merge($this->stages, array_reverse($this->after))) {
+
+				return;
+			}
+		}
+			
 
 		if ($response = $this->R->$stage->performStage()) {
-
 			$this->Emitter->emit($response);
 			
 			return;
@@ -46,4 +53,6 @@ class StageController
 
 		$this->nextStage();
 	}
+
+
 }
