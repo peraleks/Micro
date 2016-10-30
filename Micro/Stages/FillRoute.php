@@ -1,5 +1,5 @@
 <?php
-namespace MicroMir\Stage;
+namespace MicroMir\Stages;
 
 class FillRoute
 {
@@ -11,7 +11,7 @@ class FillRoute
 		$this->ResponseFactory = $R->ResponseFactory;
 	}
 
-	public function performStage()
+	public function executeStage()
 	{
 		$host = $this->Request->getUri()->getHost();
 

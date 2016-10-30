@@ -1,11 +1,11 @@
 <?php
-namespace MicroMir\Stage;
+namespace MicroMir\Stages;
 
 use MicroMir\Exception\MicroException;
 
-class ExecuteRouteException extends MicroException
+class FollowRouteException extends MicroException
 {
-	protected $exceptionCode = 'ExecuteRoute';
+	protected $exceptionCode = 'FollowRoute';
 
 	protected $ru = [
 		0 => "Хост {0} не найден на сервере ",
