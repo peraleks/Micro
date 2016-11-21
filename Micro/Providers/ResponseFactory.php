@@ -28,14 +28,14 @@ class ResponseFactory
 				break;
 
 			case 'empty':
-				return new EmptyResponse($body, $status, $headers);
+				return new EmptyResponse($status, $headers);
 				break;
 
 			case 'text':
 				return new TextResponse($body, $status, $headers);
 				break;
 
-			case 'response':
+			case 'stream':
 				return new Response($body, $status, $headers);
 				break;
 			

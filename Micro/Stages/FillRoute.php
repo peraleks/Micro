@@ -18,9 +18,8 @@ class FillRoute
 		if (! $router = $this->RouterHost->getRouterByHost($host)) {
 
 			$statusCode = 404;
-			$message
-			=
-			"Сайт $host не найден на этом сервере<br>Website $host not found on this server";
+			$message[] = "Сайт $host не найден на этом сервере";
+			$message[] = "Website $host not found on this server";
 
 			ob_start();
 

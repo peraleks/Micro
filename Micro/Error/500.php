@@ -32,6 +32,10 @@ div.error_user_mmessage div.error_text {
     <div class="error_header"><?php echo $statusCode.' '.$phrase ?></div>
     <div></div>
     <div class="error_text">
-        <?php echo $message ?>
+        <?php
+        foreach ($message as $MessageValue) {
+            echo $MessageValue.'<br>';
+        }
+        ?>
     </div>
 </div>

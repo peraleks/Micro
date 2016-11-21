@@ -58,8 +58,9 @@ class NotFound404
 
 	private function default404()
 	{
-		$message = "Здесь ничего нет<br>There's nothing here";
 		$statusCode = 404;
+		$message[] = "Здесь ничего нет";
+		$message[] = "There's nothing here";
 
 		ob_start();
 
