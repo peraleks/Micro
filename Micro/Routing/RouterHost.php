@@ -8,29 +8,21 @@ class RouterHost
 	private $hosts = [];
 
 	private $lastRouter;
+    
 
-	private static $instance;
+    public function __construct($R)
+    {
+        $this->Verbs = $R->Verbs;
 
-	public static function instance()
-	{
-		self::$instance
-		?:
-		self::$instance = new self;
-
-		return self::$instance;
-	}
-
-	public function init($path)
-	{
 		$RouterHost = $this;
 
-		include $path;
+		include MICRO_HOSTS_SETTINGS;
 
 		return $this;
-	}
+    }
 
 	private function router($name = '')
-	{	
+	{
 		if (array_key_exists($name, $this->routers)) {
 			new RouterHostException(0, ['->router(\''.$name.'\')']);
 			return $this;
@@ -94,7 +86,7 @@ class RouterHost
 
 			$router['object']
 			=
-			new Router($router['path'], $router['safe']);
+			new Router($this->Verbs->array, $router['path'], $router['safe']);
 		}
 		return $router['object'];
 	}

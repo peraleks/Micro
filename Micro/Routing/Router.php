@@ -3,23 +3,23 @@ namespace MicroMir\Routing;
 
 class Router
 {
-    private $routes = [];
+    private $methods   = [];
 
-    private $simple = [];
+    private $routes    = [];
 
-    private $regex  = [];
+    private $simple    = [];
 
-    private $name   = [];
+    private $regex     = [];
 
-    private $urlNodes = [];
+    private $name      = [];
+
+    private $urlNodes  = [];
 
     private $nameSpace = [];
 
     private $controllerGroup;
 
     private $controllerSpace = [];
-
-    private $methods = ['GET', 'POST', 'PUT', 'DELETE'];
 
     private $safeMode;
 
@@ -30,8 +30,10 @@ class Router
     private $last = false;
 
 
-    public function __construct(array $arr, $safe = 1)
+    public function __construct(array $verbs, array $routePaths, $safe = '')
     {
+        $this->methods = $verbs;
+
         $safe == 'notSafe'
         ?
         $this->safeMode = 0
@@ -40,8 +42,8 @@ class Router
 
         $this->page404['code404'] = '';
         $this->page404['nSpace']  = '';
-        
-        foreach ($arr as $path) {
+
+        foreach ($routePaths as $path) {
             $this->inclusion($path);
         }
         if ($this->safeMode) {
@@ -146,7 +148,7 @@ class Router
                             $file = key($this->urlNodes);
             $this->urlNodes[$file][] = $route;
         end($this->urlNodes[$file]);
-        
+
         $this->last = 'node';
 
         return $this;
@@ -178,7 +180,7 @@ class Router
      public function End_nameSpace()
      {
          $file = key($this->nameSpace);
-         
+
          if (empty($this->nameSpace) || null === array_pop($this->nameSpace[$file])) {
              new RouterException(6,['End_nameSpace()']);
          }
@@ -198,10 +200,10 @@ class Router
             if (!empty($this->controllerGroup)) {
                 new RouterException(24, [$this->controllerGroup]);
                 return $this;
-            } 
+            }
         }
         $this->controllerGroup = $controller;
-       
+
         return $this;
     }
 
@@ -357,54 +359,31 @@ class Router
         return $this;
     }
 
-    private function get($action = null, $controller = null)
+    public function __call($name, $args)
     {
-        if (!$action) {
-            new RouterException(16, [__FUNCTION__.'()']);
+        if (! array_key_exists($name, $this->methods)) {
+            new RouterException(9, ['->'.$name.'()']);
             return $this;
         }
-        $this->checkMethod('get', 'GET', $action, $controller);
+
+            //$args[0] - action, $args[1] - controller
+        if (! isset($args[0])) {
+            new RouterException(16, ['->'.$name.'()']);
+            return $this;
+        }
+
+        $this->checkMethod($name, $args[0], isset($args[1]) ? $args[1] : null);
         return $this;
     }
 
-    private function post($action = null, $controller = null)
-    {
-        if (!$action) {
-            new RouterException(16, [__FUNCTION__.'()']);
-            return $this;
-        }
-        $this->checkMethod('post', 'POST', $action, $controller);
-        return $this;
-    }
-
-    private function put($action = null, $controller = null)
-    {
-        if (!$action) {
-            new RouterException(16, [__FUNCTION__.'()']);
-            return $this;
-        }
-        $this->checkMethod('put', 'PUT', $action, $controller);
-        return $this;
-    }
-
-    private function delete($action = null, $controller = null)
-    {
-        if (!$action) {
-            new RouterException(16, [__FUNCTION__.'()']);
-            return $this;
-        }
-        $this->checkMethod('delete', 'DELETE', $action, $controller);
-        return $this;
-    }
-
-    private function checkMethod($messMethod, $method, $action, $controller = null)
+    private function checkMethod($method, $action, $controller)
     {
         if ($this->last != 'route') {
-            new RouterException(4, ["$messMethod('".$action."')"], 1);
+            new RouterException(4, ['->'."$method('".$action."')"], 1);
             return;
         }
         if (isset($this->routes[key($this->routes)][$method]['action'])) {
-            new RouterException(14, ["$messMethod('".$action."')"], 1);
+            new RouterException(14, ['->'."$method('".$action."')"], 1);
             return;
         }
         $this->method($method, $action, $controller);
@@ -460,7 +439,7 @@ class Router
             $route['nSpace'] = $nSpace;
 
             $this->name[$fullSpace] = &$route;
-        } 
+        }
         else {
             $this->name[$name] = &$route;
         }
@@ -487,12 +466,6 @@ class Router
         }
         $lastRoure['overflow'] = '';
 
-        return $this;
-    }
-
-    public function __call($name, $args)
-    {
-        new RouterException(9, [$name.'()']);
         return $this;
     }
 
@@ -550,34 +523,32 @@ class Router
         }
         $this->page404['controller'] = $controller;
         $this->page404['action']     = $action;
-        
+
         return $this;
     }
 
     public function matchUrl($url, $method)
     {
-        $url = parse_url($url, PHP_URL_PATH); #????????????????????????????????????????????
-
         $url == '/'
         ?:
         $url = rtrim($url, '/');
 
-        if (!array_key_exists($method, $this->simple)) {
-            return $this->page404;
-        }
-        if (array_key_exists($url, $this->simple[$method])) {
-            if (array_key_exists('nSpace', $this->simple[$method][$url])) {
-                $nSpace = $this->simple[$method][$url]['nSpace'];
+        if (array_key_exists($method, $this->simple)) {
+
+            if (array_key_exists($url, $this->simple[$method])) {
+                if (array_key_exists('nSpace', $this->simple[$method][$url])) {
+                    $nSpace = $this->simple[$method][$url]['nSpace'];
+                }
+                else {
+                    $nSpace = '';
+                }
+                return [
+                'controller' => $this->simple[$method][$url][$method]['controller'],
+                'action' => $this->simple[$method][$url][$method]['action'],
+                'params' => [],
+                'nSpace' => $nSpace,
+                ];
             }
-            else {
-                $nSpace = '';
-            }
-            return [
-                    'controller' => $this->simple[$method][$url][$method]['controller'],
-                        'action' => $this->simple[$method][$url][$method]['action'],
-                        'params' => [],
-                        'nSpace' => $nSpace,
-                   ];
         }
         if (!array_key_exists($method, $this->regex)) {
             return $this->page404;
@@ -637,9 +608,8 @@ class Router
         }
         if (array_key_exists('code404', $this->matchUrl($url, 'GET'))){
             include __DIR__.'/list/list.php';
+            die();
         }
-
-        return $this;
     }
 
     public function getByNamespace($namespace) {

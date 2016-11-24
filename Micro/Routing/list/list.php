@@ -200,30 +200,30 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 			<input id="input_controller">
 		</th>
 		<?php
-		for ($i = 0; $i < count($this->methods); $i++) {
-			echo
-			'<th>
-				<div class="but_method" data-cell="'
-					.$this->methods[$i].
-				'">'
-					.$this->methods[$i].
-				'</div>
-			</th>';
-			echo
-			'<th>
-				<div class="narrow" data-cell="'.($partsCount + 7 + ($i * 3)).'">
+		$i = 0;
+		foreach ($this->methods as $MethosdsValue): ?>
+			<th>
+				<div class="but_method" data-cell="
+					<?= $MethosdsValue ?>
+				">
+					<?= $MethosdsValue ?>
+				</div>
+			</th>
+			<th>
+				<div class="narrow" data-cell="<?= ($partsCount + 7 + ($i * 3)) ?>">
 					&#10040;
 				</div>
 				<input id="input_method">
-			</th>';
-			echo
-			'<th>
-				<div class="narrow" data-cell="'.($partsCount + 8 + ($i * 3)).'">
+			</th>
+			<th>
+				<div class="narrow" data-cell="<?= ($partsCount + 8 + ($i * 3)) ?>">
 					&#10040;
 				</div>
 				<input id="input_method">
-			</th>';
-		}
+			</th>
+		<?php
+		++$i;
+		endforeach;
 		?>
 	</tr>
 	<tr id="sort">
@@ -239,14 +239,13 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 	</tr>
 	<?php
 	$counter = 0;
-	foreach($listArr as $ListArrKey => $ListArrValue) {
-		$counter++;
-		echo '<tr>';
-		echo '<td class="file">'		   .$ListArrValue['file']	  .'</td>';
-		echo "<td>$counter</td>";
-		echo '<td class="name">'		   .$ListArrValue['name']	  .'</td>';
-		echo '<td class="back-parts join">'.$ListArrValue['routeMask'].'</td>';
-
+	foreach($listArr as $ListArrKey => $ListArrValue): ?>
+		<tr>
+		<td class="file"><?= 			$ListArrValue['file'] ?></td>
+		<td><?= 						++$counter			  ?></td>
+		<td class="name"><?= 			$ListArrValue['name'] ?></td>
+		<td class="back-parts join"><?= $ListArrValue['routeMask'] ?></td>
+		<?php
 		for ($i = 0; $i < $partsCount; $i++) {
 
 			if (array_key_exists($i, $ListArrValue['splitParts'])) {
@@ -256,19 +255,20 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 				echo '<td class="back-parts"></td>';
 			}
 		}
-		echo '<td class="route">'.$ListArrKey.'</td>';
-		echo '<td class="controller">'.$ListArrValue['controller'].'</td>';
+		?>
+		<td class="route"><?= $ListArrKey ?></td>
+		<td class="controller"><?= $ListArrValue['controller'] ?></td>
+		<?php
+		foreach ($ListArrValue['mac'] as  $MacValue): ?>
 
-		foreach ($ListArrValue['mac'] as  $MacValue) {
-
-			echo '<td class="method">'			 .$MacValue[0].'</td>';
-			echo '<td class="action">'			 .$MacValue[1].'</td>';
-			echo '<td class="method_controller">'.$MacValue[2].'</td>';
-	
-		}
-		echo '</tr>';
-	}
-	?>
+			<td class="method"><?= $MacValue[0] ?></td>
+			<td class="action"><?= $MacValue[1] ?></td>
+			<td class="method_controller"><?= $MacValue[2] ?></td>
+		<?php
+		endforeach; ?>
+		</tr>
+	<?php
+	endforeach; ?>
 </table>
 </div>
 </body>

@@ -46,8 +46,8 @@ class NotFound404
 				$this->ResponseFactory->get(
 					$errorPage,
 					404,
-					'html',
-					['Content-Length' => '']
+					'html'
+					// ['Content-Length' => '']
 				);
 			}
 		}

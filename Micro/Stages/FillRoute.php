@@ -5,7 +5,7 @@ class FillRoute
 {
 	public function __construct($R)
 	{
-		$this->RouterHost = $R->RouterHost->init(MICRO_DIR.'/app/config/hosts.php');
+		$this->RouterHost = $R->RouterHost;
 		$this->Route 	  = $R->Route;
 		$this->Request 	  = $R->Request;
 		$this->ResponseFactory = $R->ResponseFactory;
@@ -29,18 +29,16 @@ class FillRoute
 			$this->ResponseFactory->get(
 				ob_get_clean(),
 				404,
-				'html',
-				['Content-Length'=>'']
+				'html'
 			);
 		}
 
-		$this->Route->set
-		(
-			$router->matchUrl
-			(
-  			 	$this->Request->getUri()->getPath(),
-  			 	$this->Request->getMethod()
-  			)
+		if (($method = $this->Request->getMethod()) == 'HEAD') {
+			$method = 'GET';
+		}
+
+		$this->Route->set(
+			$router->matchUrl($this->Request->getUri()->getPath(), $method)
 		);
 	}
 }
