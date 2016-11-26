@@ -401,7 +401,7 @@ class Router
         : $lastRoute[$method]['controller'] = &$lastRoute['controller'];
 
         $type = $this->routes[$last]['type'];
-        $this->$type[$method][$last] = &$lastRoute;
+        $this->$type[$last] = &$lastRoute;
     }
 
 
@@ -529,75 +529,74 @@ class Router
     public function matchUrl($url, $method)
     {
         $url == '/'
-        ?:
-        $url = rtrim($url, '/');
+        ?: $url = rtrim($url, '/');
 
-        if (array_key_exists($method, $this->simple)) {
+        if (isset($this->simple[$url])) {
 
-            if (array_key_exists($url, $this->simple[$method])) {
-                if (array_key_exists('nSpace', $this->simple[$method][$url])) {
-                    $nSpace = $this->simple[$method][$url]['nSpace'];
-                }
-                else {
-                    $nSpace = '';
-                }
-                return [
-                'controller' => $this->simple[$method][$url][$method]['controller'],
-                'action' => $this->simple[$method][$url][$method]['action'],
-                'params' => [],
-                'nSpace' => $nSpace,
-                ];
+            if (! isset($this->simple[$url][$method])) {
+                return $this->code405;
             }
-        }
-        if (!array_key_exists($method, $this->regex)) {
-            return $this->page404;
-        }
-        foreach ($this->regex[$method] as $regexArr) {
 
-            if (preg_match($regexArr['mask'], $url)) {
-                $urlParts = explode('/', ltrim($url, '/'));
+            isset($this->simple[$url]['nSpace'])
+            ? $nSpace = $this->simple[$url]['nSpace']
+            : $nSpace = '';
 
-                if (array_key_exists('optional', $regexArr)) {
-                    if (($count = count($urlParts)) > count($regexArr['parts'])) {
+            return [
+                'controller' => $this->simple[$url][$method]['controller'],
+                    'action' => $this->simple[$url][$method]['action'],
+                    'nSpace' => $nSpace,
+                    'params' => [],
+            ];
+        }
+
+        foreach ($this->regex as $regexRoute) {
+
+            if (! preg_match($regexRoute['mask'], $url)) continue;
+
+            if (! isset($regexRoute[$method])) {
+                return $this->code405;
+            }
+
+            $urlParts = explode('/', ltrim($url, '/'));
+
+            if (isset($regexRoute['optional'])) {
+                if (($count = count($urlParts)) > count($regexRoute['parts'])) {
+                    return $this->page404;
+                }
+
+                for ($i = $regexRoute['optional']; $i < $count; ++$i) {
+                    if (!preg_match('#^'.$regexRoute['parts'][$i].'$#', $urlParts[$i])) {
                         return $this->page404;
                     }
-                    else {
-                        for ($i = $regexArr['optional']; $i < $count; ++$i) {
-                            if (!preg_match('#^'.$regexArr['parts'][$i].'$#', $urlParts[$i])) {
-                                return $this->page404;
-                            }
-                        }
-                    }
                 }
-                $params = [];
-                foreach ($regexArr['params'] as $key => $value) {
-                    if (array_key_exists($value, $urlParts)) {
-                        $params[$key] = $urlParts[$value];
-                    }
-                    else {
-                        break;
-                    }
-                }
-                if (array_key_exists('nSpace', $regexArr)) {
-                    $nSpace = $regexArr['nSpace'];
-                }
-                else {
-                    $nSpace = '';
-                }
-                return [
-                        'controller' => $regexArr[$method]['controller'],
-                            'action' => $regexArr[$method]['action'],
-                            'params' => $params,
-                            'nSpace' => $nSpace,
-                       ];
             }
+
+            $params = [];
+            foreach ($regexRoute['params'] as $key => $value) {
+                if (array_key_exists($value, $urlParts)) {
+                    $params[$key] = $urlParts[$value];
+                } else {
+                    break;
+                }
+            }
+
+            isset($regexRoute['nSpace'])
+            ? $nSpace = $regexRoute['nSpace']
+            : $nSpace = '';
+
+            return [
+                'controller' => $regexRoute[$method]['controller'],
+                    'action' => $regexRoute[$method]['action'],
+                    'params' => $params,
+                    'nSpace' => $nSpace,
+            ];
         }
         return $this->page404;
     }
 
     public function list($url = null)
     {
-        if (!$url) {
+        if (! $url) {
             new RouterException(16, [__FUNCTION__.'()']);
             return $this;
         }
