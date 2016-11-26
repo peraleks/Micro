@@ -6,13 +6,13 @@ class ErrorHandler
 {
     static private $instance;
 
-    private $R; // требуется для include(__DIR__.'/trace.php')
+    private $R; // используется в __DIR__.'/trace.php'
 
     private $headerMessages = [];
 
     private $headerMessagesDefault = [];
 
-    private $traceResult; // требуется для include(__DIR__.'/trace.php')
+    private $traceResult; // используется в __DIR__.'/trace.php'
 
     private function getErrorName($error) {
         $errors = [
@@ -48,8 +48,8 @@ class ErrorHandler
         register_shutdown_function([$this, 'fatalError']);
 
         $this->headerMessagesDefault['header']  = '500 Internal Server Error';
-        $this->headerMessagesDefault['message'] = "Сервер отдыхает. Зайдите позже.<br>
-                                                   Don't worry!<br>Chip 'n Dale Rescue Rangers";
+        $this->headerMessagesDefault['message'][] = 'Сервер отдыхает. Зайдите позже.';
+        $this->headerMessagesDefault['message'][] = "Don't worry! Chip 'n Dale Rescue Rangers";
    }
 
     static public function instance()
@@ -119,8 +119,6 @@ class ErrorHandler
         foreach ($trace as $TraceValue) {
              $traceArr[] = $TraceValue;
         }
-        $this->traceHandler( $traceArr, $file);
-
         $this->traceHandler( $traceArr, $file);
 
         $this->notify(

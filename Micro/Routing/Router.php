@@ -35,10 +35,8 @@ class Router
         $this->methods = $verbs;
 
         $safe == 'notSafe'
-        ?
-        $this->safeMode = 0
-        :
-        $this->safeMode = 1;
+        ? $this->safeMode = 0
+        : $this->safeMode = 1;
 
         $this->page404['code404'] = '';
         $this->page404['nSpace']  = '';
@@ -86,10 +84,10 @@ class Router
 
         ++$this->safeMode;
 
-            $this->urlNodes[$path] = [];
+        $this->urlNodes[$path] = [];
         end($this->urlNodes);
 
-            $this->nameSpace[$path] = [];
+        $this->nameSpace[$path] = [];
         end($this->nameSpace);
 
         $this->controllerSpace[] = '';
@@ -107,10 +105,10 @@ class Router
             array_pop($this->routeFiles);
 
             unset($this->urlNodes[$path]);
-              end($this->urlNodes);
+            end($this->urlNodes);
 
             unset($this->nameSpace[$path]);
-              end($this->nameSpace);
+            end($this->nameSpace);
 
             array_pop($this->controllerSpace);
 
@@ -122,16 +120,19 @@ class Router
         if ($this->controllerGroup) {
             new RouterException(26, [$this->controllerGroup, $path], 1);
         }
-                                  $file = key($this->urlNodes);
+
+        $file = key($this->urlNodes);
         if (empty($this->urlNodes[$file])) {
-                  $this->urlNodes[$file] = '';
+            $this->urlNodes[$file] = '';
             unset($this->urlNodes[$file]);
         }
-                                   $file = key($this->nameSpace);
+
+        $file = key($this->nameSpace);
         if (empty($this->nameSpace[$file])) {
-                  $this->nameSpace[$file] = '';
+            $this->nameSpace[$file] = '';
             unset($this->nameSpace[$file]);
         }
+
         array_pop($this->controllerSpace);
         $this->controllerGroup = null;
         return;
@@ -145,8 +146,8 @@ class Router
 
     private function node($route = '')
     {
-                            $file = key($this->urlNodes);
-            $this->urlNodes[$file][] = $route;
+        $file = key($this->urlNodes);
+        $this->urlNodes[$file][] = $route;
         end($this->urlNodes[$file]);
 
         $this->last = 'node';
@@ -154,14 +155,14 @@ class Router
         return $this;
     }
 
-    public function End_node()
+    public function nodeEnd()
     {
         $file = key($this->urlNodes);
 
         if (empty($this->urlNodes) || null === array_pop($this->urlNodes[$file])) {
-            new RouterException(6,['End_node()']);
+            new RouterException(6,['nodeEnd()']);
         }
-        $this->last = 'End_node';
+        $this->last = 'nodeEnd';
 
         return $this;
     }
@@ -396,10 +397,8 @@ class Router
         $lastRoute[$method]['action'] = $action;
 
         $controller
-        ?
-        $lastRoute[$method]['controller'] = end($this->controllerSpace).$controller
-        :
-        $lastRoute[$method]['controller'] = &$lastRoute['controller'];
+        ? $lastRoute[$method]['controller'] = end($this->controllerSpace).$controller
+        : $lastRoute[$method]['controller'] = &$lastRoute['controller'];
 
         $type = $this->routes[$last]['type'];
         $this->$type[$method][$last] = &$lastRoute;

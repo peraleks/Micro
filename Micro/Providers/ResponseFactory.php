@@ -3,11 +3,11 @@ namespace MicroMir\Providers;
 
 use Zend\Diactoros\Response;
 use Zend\Diactoros\Response\{
-				HtmlResponse,
-				JsonResponse,
-				TextResponse,
-				EmptyResponse,
-				RedirectResponse
+	HtmlResponse,
+	JsonResponse,
+	TextResponse,
+	EmptyResponse,
+	RedirectResponse
 };
 
 class ResponseFactory

@@ -25,8 +25,8 @@ class MethodNotImplemented501
         	$this->ResponseFactory->get(
         		ob_get_clean(),
         		501,
-        		'html',
-        		['Content-Length' => '']
+        		'html'
+        		// ['Content-Length' => '']
         	);
         }
     }
