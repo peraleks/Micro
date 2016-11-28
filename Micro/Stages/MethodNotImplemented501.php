@@ -26,7 +26,6 @@ class MethodNotImplemented501
         		ob_get_clean(),
         		501,
         		'html'
-        		// ['Content-Length' => '']
         	);
         }
     }

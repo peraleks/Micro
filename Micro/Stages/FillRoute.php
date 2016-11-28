@@ -29,8 +29,7 @@ class FillRoute
 			$this->ResponseFactory->get(
 				ob_get_clean(),
 				404,
-				'html',
-				['Content-Length' => '']
+				'html'
 			);
 		}
 

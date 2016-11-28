@@ -25,22 +25,24 @@ class Router
 
     private $routeFiles = [];
 
-    private $page404 = [];
+    private $match404 = [];
 
     private $last = false;
 
-
+    /**
+     * @param array $verbs            HTTP методы (глаголы)
+     * @param array $routePaths       пути файлов с маршрутами
+     * @param string $safe            режим обработки файлов с маршрутами
+     */
     public function __construct(array $verbs, array $routePaths, $safe = '')
     {
         $this->methods = $verbs;
-
-        $safe == 'notSafe'
-        ? $this->safeMode = 0
-        : $this->safeMode = 1;
-
-        $this->page404['code404'] = '';
-        $this->page404['nSpace']  = '';
-
+        
+        $safe == 'notSafe' ? $this->safeMode = 0 : $this->safeMode = 1;
+        
+        $this->match404['code'] = 404;
+		$this->match404['nSpace'] = '';
+        
         foreach ($routePaths as $path) {
             $this->inclusion($path);
         }
@@ -155,7 +157,7 @@ class Router
         return $this;
     }
 
-    public function nodeEnd()
+    private function nodeEnd()
     {
         $file = key($this->urlNodes);
 
@@ -169,8 +171,8 @@ class Router
 
      private function nameSpace($space = '')
      {
-                             $file = key($this->nameSpace);
-            $this->nameSpace[$file][] = $space;
+        $file = key($this->nameSpace);
+        $this->nameSpace[$file][] = $space;
         end($this->nameSpace[$file]);
 
         $this->last = 'nameSpace';
@@ -178,7 +180,7 @@ class Router
         return $this;
     }
 
-     public function End_nameSpace()
+     private function End_nameSpace()
      {
          $file = key($this->nameSpace);
 
@@ -367,7 +369,7 @@ class Router
             return $this;
         }
 
-            //$args[0] - action, $args[1] - controller
+        //$args[0] - action, $args[1] - controller
         if (! isset($args[0])) {
             new RouterException(16, ['->'.$name.'()']);
             return $this;
@@ -484,7 +486,7 @@ class Router
             $this->groupPop($lastFile, $group, $groupName);
         }
     }
-
+	
     private function checkRegex()
     {
         foreach ($this->methods as $method) {
@@ -508,6 +510,14 @@ class Router
         }
     }
 
+    /**
+     * Меняет стандартную страницу 404
+     *
+     * 
+     * @param  string $controller контроллер
+     * @param  string $action     действие
+     * @return object             $this
+     */
     private function page404($controller = null, $action = null)
     {
         if (!$controller) {
@@ -516,85 +526,114 @@ class Router
         }
         if ($this->safeMode) {
 
-            $this->page404['file']
+            $this->match404['file']
             =
             debug_backtrace()[0]['file'].'::'.debug_backtrace()[0]['line'];
         }
-        $this->page404['controller'] = $controller;
-        $this->page404['action']     = $action;
+        $this->match404['controller'] = $controller;
+        $this->match404['action']     = $action;
 
         return $this;
     }
 
+
+    /**
+     * Находит  маршрут по URL и методу.
+     * 
+     * Сначала поиск происходит по индексу простых URL
+     * дале по индексу URL содержащих параметры.
+     * Если не найден URL возвращается массив с ключом 'code404',
+     * если наиден URL и в нем не наден метод - 'code405'
+     * 
+     * @param string $url       часть URL, только URL-путь
+     * @param string $method    HTTP метод
+     * @return array
+     */
     public function matchUrl($url, $method)
     {
-        $url == '/'
-        ?: $url = rtrim($url, '/');
+		$url == '/'	?: $url = rtrim($url, '/');
 
-        if (isset($this->simple[$url])) {
+		if (isset($this->simple[$url])) {
 
-            if (! isset($this->simple[$url][$method])) {
-                return $this->code405;
-            }
+			if (! isset($this->simple[$url][$method])) {
+				return $this->match405($this->simple[$url]);
+			}
 
-            isset($this->simple[$url]['nSpace'])
-            ? $nSpace = $this->simple[$url]['nSpace']
-            : $nSpace = '';
+			isset($this->simple[$url]['nSpace'])
+				? $nSpace = $this->simple[$url]['nSpace']
+				: $nSpace = '';
 
-            return [
-                'controller' => $this->simple[$url][$method]['controller'],
-                    'action' => $this->simple[$url][$method]['action'],
-                    'nSpace' => $nSpace,
-                    'params' => [],
-            ];
-        }
+			return [
+				'code'       => 200,
+				'controller' => $this->simple[$url][$method]['controller'],
+				'action'     => $this->simple[$url][$method]['action'],
+				'nSpace'     => $nSpace,
+				'params'     => []
+			];
+		}
 
-        foreach ($this->regex as $regexRoute) {
+		foreach ($this->regex as $regexRoute) {
 
-            if (! preg_match($regexRoute['mask'], $url)) continue;
+			if (!preg_match($regexRoute['mask'], $url)) continue;
 
-            if (! isset($regexRoute[$method])) {
-                return $this->code405;
-            }
+			if (!isset($regexRoute[$method])) {
+				return $this->match405($regexRoute);
+			}
 
-            $urlParts = explode('/', ltrim($url, '/'));
+			$urlParts = explode('/', ltrim($url, '/'));
 
-            if (isset($regexRoute['optional'])) {
-                if (($count = count($urlParts)) > count($regexRoute['parts'])) {
-                    return $this->page404;
-                }
+			if (isset($regexRoute['optional'])) {
+				if (($count = count($urlParts)) > count($regexRoute['parts'])) continue;
 
-                for ($i = $regexRoute['optional']; $i < $count; ++$i) {
-                    if (!preg_match('#^'.$regexRoute['parts'][$i].'$#', $urlParts[$i])) {
-                        return $this->page404;
-                    }
-                }
-            }
+				for ($i = $regexRoute['optional']; $i < $count; ++$i) {
+					if (!preg_match('#^' . $regexRoute['parts'][$i] . '$#', $urlParts[$i])) {
+						return $this->match404;
+					}
+				}
+			}
 
-            $params = [];
-            foreach ($regexRoute['params'] as $key => $value) {
-                if (array_key_exists($value, $urlParts)) {
-                    $params[$key] = $urlParts[$value];
-                } else {
-                    break;
-                }
-            }
+			$params = [];
+			foreach ($regexRoute['params'] as $key => $value) {
+				if (isset($urlParts[$value])) {
+					$params[$key] = $urlParts[$value];
+				} else {
+					break;
+				}
+			}
 
-            isset($regexRoute['nSpace'])
-            ? $nSpace = $regexRoute['nSpace']
-            : $nSpace = '';
+			isset($regexRoute['nSpace'])
+				? $nSpace = $regexRoute['nSpace']
+				: $nSpace = '';
 
-            return [
-                'controller' => $regexRoute[$method]['controller'],
-                    'action' => $regexRoute[$method]['action'],
-                    'params' => $params,
-                    'nSpace' => $nSpace,
-            ];
-        }
-        return $this->page404;
-    }
+			return [
+				'code'       => 200,
+				'controller' => $regexRoute[$method]['controller'],
+				'action'     => $regexRoute[$method]['action'],
+				'params'     => $params,
+				'nSpace'     => $nSpace,
+			];
+		}
+		return $this->match404;
+	}
 
-    public function list($url = null)
+	private function match405(array $route)
+	{
+		$arr = [];
+		foreach ($this->methods as $methodsKey => $methodsValue) {
+			!isset($route[$methodsKey]) ?: $arr[$methodsKey] = $methodsKey;
+		}
+
+		if (isset($arr['HEAD']) && !isset($arr['GET'])) {
+			unset($arr['HEAD']);
+		}
+
+		return [
+			'code' 	=> 405,
+			'allow' => implode(',', $arr)
+		];
+	}
+
+    private function list($url = null)
     {
         if (! $url) {
             new RouterException(16, [__FUNCTION__.'()']);

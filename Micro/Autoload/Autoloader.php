@@ -62,9 +62,9 @@ class Autoloader
 
     /**
      * Добавляет в массив $nameSpaceArray пространство имён и путь
-     * 
+     *
      * @param  string       $name    пространство имён
-     * @param  string|array $path    путь   
+     * @param  string|array $path    путь
      * @return this
      */
     public function space($name, $path)
@@ -100,9 +100,44 @@ class Autoloader
     }
 
     /**
+     * Подключает файлы
+     *
+     * При отсутствии ключа '2' в $arrayLevel, файл будет подключен
+     * без предварительной проверки на наличие такового.
+     * Иначе если ключ '2' есть - будет произведена проверка
+     * на наличие файла для всех путей в $arrayLevel[0].
+     * Вслучае неудачи, поиск будет произведён
+     * по цепочке лоадеров, если таковые зарегистрированы
+     *
+     * @param array $arrayLevel содержит префикспространства имён
+     * @param string $spaceEnd  подпространство + имя класса
+     * @return void
+     */
+    private function includeFile(&$arrayLevel, $spaceEnd)
+    {
+        for ($i = 0; $i < count($arrayLevel[0]); ++$i) {
+
+            $file = $this->baseDir.$arrayLevel[0][$i].$spaceEnd.'.php';
+
+            if (($i == (count($arrayLevel[0]) - 1)) && !array_key_exists(2, $arrayLevel)) {
+                include $file;
+                ++$this->al;
+                return;
+            }
+            else {
+                if (file_exists($file)) {
+                    include $file;
+                    ++$this->al;
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
      * Добавляет в массив $className имя глобального класса
      * и в $classFile путь к файлу
-     * 
+     *
      * @param  string $file      полный путь с расширением файла
      * @param  string $class     имя класса
      * @return this
@@ -123,9 +158,9 @@ class Autoloader
      * Устанавливает флаг расширенного поиска
      * Вслучае неудачного поиска в директориях,
      * которые определены в элементе массива [0]
-     * данного пространства имён, поиск будет произведён 
+     * данного пространства имён, поиск будет произведён
      * по цепочке лоадеров, если таковые зарегистрированы
-     * 
+     *
      * @return this
      */
     public function next()
@@ -137,7 +172,7 @@ class Autoloader
 
     /**
      * Лоадер
-     * 
+     *
      * @param  string $nameSpace    полное имя класса
      * @return void
      */
@@ -152,13 +187,13 @@ class Autoloader
 
         $arrayLevel = &$this->nameSpaceArray;
 
-        foreach ($classNameParts as $ClassNamePartsValue) {
+        foreach ($classNameParts as $classNamePartsValue) {
 
-            if (!array_key_exists($ClassNamePartsValue, $arrayLevel)) {
+            if (!array_key_exists($classNamePartsValue, $arrayLevel)) {
                 break;
             }
             else {
-                $arrayLevel = &$arrayLevel[$ClassNamePartsValue];
+                $arrayLevel = &$arrayLevel[$classNamePartsValue];
 
                 if (array_key_exists(0, $arrayLevel)) {
 
@@ -167,42 +202,6 @@ class Autoloader
                     str_replace('\\', '/', str_replace($arrayLevel[1], '', $nameSpace));
 
                     $this->includeFile($arrayLevel, $spaceEnd);
-                }
-            }
-        }
-    }
-
-    /**
-     * Подключает файлы
-     * 
-     * При отсутствии ключа '2' в $arrayLevel, файл будет подключен
-     * без предварительной проверки на наличие такового.
-     * Иначе если ключ '2' есть - будет произведена проверка 
-     * на наличие файла для всех путей в $arrayLevel[0].
-     * Вслучае неудачи, поиск будет произведён 
-     * по цепочке лоадеров, если таковые зарегистрированы
-     *  
-     * @param string $class         имя класса
-     * @param array $map            $lastArray | $nameSpaceArray            
-     * @param bool $global          флаг глобального пространства
-     * @return void
-     */
-    private function includeFile(&$arrayLevel, $spaceEnd)
-    {
-        for ($i = 0; $i < count($arrayLevel[0]); ++$i) {
-
-            $file = $this->baseDir.$arrayLevel[0][$i].'/'.$spaceEnd.'.php';
-
-            if (($i == (count($arrayLevel[0]) - 1)) && !array_key_exists(2, $arrayLevel)) {
-                include $file;
-                ++$this->al;
-                return;
-            }
-            else {
-                if (file_exists($file)) {
-                    include $file;
-                    ++$this->al;
-                    return;
                 }
             }
         }

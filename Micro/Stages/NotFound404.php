@@ -5,15 +5,13 @@ class NotFound404
 {
 	public function __construct($R)
 	{
-		$this->Route = $R->Route;
+		$this->Route           = $R->Route;
 		$this->ResponseFactory = $R->ResponseFactory;
 	}
 
 	public function executeStage()
 	{
-		if (! property_exists($this->Route, 'code404')) {
-			return;
-		}
+		if ($this->Route->code !== 404) return;
 
 		if (! property_exists($this->Route, 'controller')) {
 			return $this->default404();
@@ -27,16 +25,15 @@ class NotFound404
 			}
 			catch (\Error $e)
 			{
-				return $this->default404();
-
-				new ExecuteRouteException(1,
+                new NotFound404Exception(0,
 					[$e->getMessage(),
 					$e->getFile(),
-					$e->getLine()], 
+					$e->getLine()],
 					'404'
 					);
-			}
-			return;
+                return $this->default404();
+            }
+            return;
 		}
 
 		if (preg_match("/(.+?\.html|.+?\.htm)$/", $this->Route->controller)) {
@@ -47,7 +44,6 @@ class NotFound404
 					$errorPage,
 					404,
 					'html'
-					// ['Content-Length' => '']
 				);
 			}
 		}
@@ -71,7 +67,6 @@ class NotFound404
 			ob_get_clean(),
 			404,
 			'html'
-			// ['Content-Length' => '']
 		);
 	}
 
