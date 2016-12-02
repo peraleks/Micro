@@ -11,7 +11,7 @@ class MethodNotImplemented501
 
     public function executeStage()
     {
-        if (! array_key_exists($_SERVER['REQUEST_METHOD'], $this->Verbs->array)) {
+        if (! array_key_exists(strtolower($_SERVER['REQUEST_METHOD']), $this->Verbs->array)) {
 
         	$statusCode = 501;
         	$message[] = "Метод не поддерживается сервером";

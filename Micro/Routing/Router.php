@@ -77,10 +77,10 @@ class Router
                 new RouterException(12, [$path]);
                 return;
             }
-            if (!empty($this->controllerGroup)) {
-                new RouterException(25, [$this->controllerGroup], 1);
-                return;
-            }
+//            if (!empty($this->controllerGroup)) {
+//                new RouterException(25, [$this->controllerGroup], 1);
+//                return;
+//            }
         }
         $this->routeFiles[$path] = $this->safeMode;
 
@@ -119,9 +119,9 @@ class Router
 
         $this->checkGroup($this->urlNodes, 'node');
         $this->checkGroup($this->nameSpace, 'nameSpace');
-        if ($this->controllerGroup) {
-            new RouterException(26, [$this->controllerGroup, $path], 1);
-        }
+//        if ($this->controllerGroup) {
+//            new RouterException(26, [$this->controllerGroup, $path], 1);
+//        }
 
         $file = key($this->urlNodes);
         if (empty($this->urlNodes[$file])) {
@@ -200,24 +200,24 @@ class Router
                 new RouterException(16, [__FUNCTION__.'()']);
                 return $this;
             }
-            if (!empty($this->controllerGroup)) {
-                new RouterException(24, [$this->controllerGroup]);
-                return $this;
-            }
+//            if (!empty($this->controllerGroup)) {
+//                new RouterException(24, [$this->controllerGroup]);
+//                return $this;
+//            }
         }
         $this->controllerGroup = $controller;
 
         return $this;
     }
 
-    private function End_controller($value = null) {
-        if ($this->controllerGroup === null) {
-            new RouterException(6, ["End_controller('$value')"]);
-        }
-        $this->controllerGroup = null;
-
-        return $this;
-    }
+//    private function End_controller($value = null) {
+//        if ($this->controllerGroup === null) {
+//            new RouterException(6, ["End_controller('$value')"]);
+//        }
+//        $this->controllerGroup = null;
+//
+//        return $this;
+//    }
 
     private function controllerSpace($space = null)
     {
@@ -236,12 +236,12 @@ class Router
         return $this;
     }
 
-    private function route($route = null, $controller = null)
+    private function route($route, $controller = null)
     {
-        if ($this->safeMode && !$route) {
-            new RouterException(16, [__FUNCTION__.'()']);
-            return $this;
-        }
+//        if ($this->safeMode && !$route) {
+//            new RouterException(16, [__FUNCTION__.'()']);
+//            return $this;
+//        }
         $nodes[] = '';
         foreach ($this->urlNodes as $File) {
             foreach ($File as $Node) {
@@ -251,17 +251,17 @@ class Router
         $arr['route'] = implode('', $nodes);
         $arr['route'] .= $route;
 
-        $arr['route'] == '/'
-        ?:
-        $arr['route'] = rtrim($arr['route'], '/');
+        $arr['route'] == '/' ?: $arr['route'] = rtrim($arr['route'], '/');
 
-        if ($this->safeMode) {
-            if (array_key_exists($arr['route'], $this->routes)) {
-                new RouterException(13, [$arr['route']]);
-                return $this;
-            }
-        }
+        // проверка на уникальность роута - переделать с методом!
+//        if ($this->safeMode) {
+//            if (array_key_exists($arr['route'], $this->routes)) {
+//                new RouterException(13, [$arr['route']]);
+//                return $this;
+//            }
+//        }
 
+        //проверка и добавление контроллера
         if ($controller) {
             $arr['controller'] = end($this->controllerSpace).$controller;
         }
@@ -323,7 +323,7 @@ class Router
         end($this->routes);
         $this->last = 'route';
 
-        return $this;
+//        return $this;
     }
 
     private function regex($regexArr = null)
@@ -362,48 +362,138 @@ class Router
         return $this;
     }
 
-    public function __call($name, $args)
+    public function __call($verb, $args)
     {
-        if (! array_key_exists($name, $this->methods)) {
-            new RouterException(9, ['->'.$name.'()']);
+        if (!array_key_exists($verb, $this->methods)) {
+            new RouterException(9, ['->'.$verb.'()']);
             return $this;
         }
 
-        //$args[0] - action, $args[1] - controller
-        if (! isset($args[0])) {
-            new RouterException(16, ['->'.$name.'()']);
+        if (!isset($args[1])) {
+            new RouterException(16, ['->'.$verb.'()']); // to do
             return $this;
         }
 
-        $this->checkMethod($name, $args[0], isset($args[1]) ? $args[1] : null);
+        $path   = $args[0];
+        $action = $args[1];
+        isset($args[2]) ? $controller = $args[2] : $controller = null;
+
+        //добавляем префиксы к пути и нормализуем последний '/'
+        $nodes[] = '';
+        foreach ($this->urlNodes as $File) {
+            foreach ($File as $Node) {
+                $nodes[] = $Node;
+            }
+        }
+        $fullPath = implode('', $nodes);
+        $fullPath .= $path;
+        $fullPath == '/' ?: $fullPath = rtrim($fullPath, '/');
+
+        if (!isset($this->routes[$fullPath])) {
+            $this->routes[$fullPath] = $this->parsePath($fullPath);
+            $this->routes[$fullPath]['path'] = $fullPath;
+        }
+        elseif (isset($this->routes[$fullPath]['verbs'][$verb])) {
+            new RouterException(14, ['->'."$verb('".$action."')"], 1);// переделать
+            return $this;
+        }
+
+        //проверка и добавление контроллера и действия
+        $method = &$this->routes[$fullPath]['verbs'][$verb];
+        if ($controller) {
+            $method['controller'] = end($this->controllerSpace).$controller;
+        }
+        elseif ($this->controllerGroup) {
+            $method['controller'] = end($this->controllerSpace).$this->controllerGroup;
+        }else {
+            new RouterException(3, [$path, 'route()']);// переделать
+            return $this;
+        }
+        $method['action'] = $action;
+
+        if ($this->safeMode) {
+            $file = debug_backtrace()[0]['file'].'::'.debug_backtrace()[0]['line'];
+            if (!isset($this->routes[$fullPath]['file'])) {
+                $this->routes[$fullPath]['file'] = $file;
+            } else {
+                strcmp($this->routes[$fullPath]['file'], $file) < 0
+                    ? $count = strlen($this->routes[$fullPath]['file'])
+                    : $count = strlen($file);
+
+                $delimiter = 0;
+                for ($i = 0; $i < $count; ++$i) {
+                    if (($this->routes[$fullPath]['file'][$i] == "/") && $file[$i] == "/") {
+                        $prevDelimiter = $delimiter;
+                        $delimiter = $i;
+                    }
+                    if (($this->routes[$fullPath]['file'][$i] == ":") && $file[$i] == ":") {
+                        $delimiter = $i;
+                    }
+                    if ($this->routes[$fullPath]['file'][$i] !== $file[$i]) {
+                        \d::p(explode('::', $this->routes[$fullPath]['file'])[0]);
+                        \d::p(substr(explode('::', $this->routes[$fullPath]['file'])[0], $delimiter));
+                        if (strpos(substr(explode('::', $this->routes[$fullPath]['file'])[0], $delimiter + 1), '/')) {
+                            $delimiter = $prevDelimiter;
+                        }
+                        $this->routes[$fullPath]['file']
+                            .= substr($file, $delimiter, strlen($file));
+                        break;
+                    }
+                }
+            }
+        }
+
+        $type = $this->routes[$fullPath]['type'];
+        $this->$type[$fullPath] = &$this->routes[$fullPath];
+
+        end($this->routes);
+        $this->last = 'route';
+
         return $this;
     }
 
-    private function checkMethod($method, $action, $controller)
+    private function parsePath($fullPath)
     {
-        if ($this->last != 'route') {
-            new RouterException(4, ['->'."$method('".$action."')"], 1);
-            return;
+        if (!strpos($fullPath, '{')) {
+            $arr['type'] = 'simple';
         }
-        if (isset($this->routes[key($this->routes)][$method]['action'])) {
-            new RouterException(14, ['->'."$method('".$action."')"], 1);
-            return;
+        else {
+            $arr['type'] = 'regex';
+            $parts = preg_split('#/#', $fullPath, -1, PREG_SPLIT_NO_EMPTY);
+            $arr['mask'] = '#^';
+            $optional = 0;
+
+            for ($i = 0; $i < count($parts); ++$i)
+            {
+                if (preg_match('/^{.+}$/', $parts[$i])) {
+                    $param = trim($parts[$i], '{}');
+                    $param = preg_replace('/\?/','', $param, 1, $opt);
+
+                    if ($opt) {
+                        if (++$optional == 1) {
+                            $arr['optional'] = $i;
+                        }
+                    }
+                    if (!$optional) {
+                        $arr['mask'] .= '/.+';
+                    }
+                    $arr['parts'][$i] = '.+';
+
+                    if (isset($arr['params'][$param])) {
+                        new RouterException( 1, [$param, $fullPath]);
+                    }
+                    $arr['params'][$param] = $i;
+                }
+                else {
+                    $arr['mask'] .= '/'.$parts[$i];
+                    $arr['parts'][$i] = $parts[$i];
+                }
+            }
+            $optional
+                ? $arr['mask'] .= '(/(.*))?$#'
+                : $arr['mask'] .= '$#';
         }
-        $this->method($method, $action, $controller);
-    }
-
-    private function method($method, $action, $controller = null)
-    {
-        $last = key($this->routes);
-        $lastRoute = &$this->routes[$last];
-        $lastRoute[$method]['action'] = $action;
-
-        $controller
-        ? $lastRoute[$method]['controller'] = end($this->controllerSpace).$controller
-        : $lastRoute[$method]['controller'] = &$lastRoute['controller'];
-
-        $type = $this->routes[$last]['type'];
-        $this->$type[$last] = &$lastRoute;
+        return $arr;
     }
 
 
@@ -551,6 +641,7 @@ class Router
      */
     public function matchUrl($url, $method)
     {
+        $method = mb_strtolower($method);
 		$url == '/'	?: $url = rtrim($url, '/');
 
 		if (isset($this->simple[$url])) {
@@ -643,7 +734,7 @@ class Router
         if ($requestUri != $url) {
             return $this;
         }
-        if (array_key_exists('code404', $this->matchUrl($url, 'GET'))){
+        if ($this->matchUrl($url, 'GET')['code'] == 404){
             include __DIR__.'/list/list.php';
             die();
         }

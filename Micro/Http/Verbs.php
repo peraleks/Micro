@@ -3,11 +3,15 @@ namespace MicroMir\Http;
 
 class Verbs
 {
-	public $array;
+	public $array = [];
 
 	public function __construct()
-	{
-		$this->array = array_flip(include(MICRO_VERBS_SETTINGS));
-	}
+    {
+        $array = include MICRO_VERBS_SETTINGS;
+
+        foreach ($array as $key => $value) {
+            $this->array[strtolower($value)] = $value;
+        }
+    }
 
 }

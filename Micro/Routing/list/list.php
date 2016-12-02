@@ -12,148 +12,144 @@ $td_text     = '<td class="back-parts text">';
 $partsCount = 0;
 $routeMask  = '';
 
-	// добавляем 404 страницу в массив $routes
+// добавляем 404 страницу в массив $routes
 $this->routes[''] = [];
-$this->routes['']['route'] = '';
-$this->routes['']['name']  = '404';
+$this->routes['']['path'] = '';
+$this->routes['']['name'] = '404';
 
+isset($this->match404['file'])
+    ? $this->routes['']['file'] = $this->match404['file']
+    : $this->routes['']['file'] = '';
 
-array_key_exists('file', $this->page404)
-?
-$this->routes['']['file'] = $this->page404['file']
-:
-$this->routes['']['file'] = '';
+isset($this->match404['action'])
+    ? $this->routes['']['verbs']['get']['action'] = $this->match404['action']
+    : $this->routes['']['verbs']['get']['action'] = '';
 
-
-array_key_exists('action', $this->page404)
-?
-$this->routes['']['GET']['action'] = $this->page404['action']
-:
-$this->routes['']['GET']['action'] = '';
-
-
-if (array_key_exists('controller', $this->page404)) {
-	$this->routes['']['GET']['controller']
-	=
-	$this->routes['']['controller']
-	=
-	$this->page404['controller'];
-}
-else {
-	$this->routes['']['GET']['controller']
-	=
-	$this->routes['']['controller']
-	=
-	'MicroCoder_default';
+if (isset($this->match404['controller'])) {
+    $this->routes['']['verbs']['get']['controller']
+        = $this->routes['']['controller']
+        = $this->match404['controller'];
+} else {
+    $this->routes['']['verbs']['get']['controller'] = 'MicroCoder_default';
 }
 
-	// готовим все маршруты для таблицы и сохраняем в массив 
+// готовим все маршруты для таблицы и сохраняем в массив
 foreach ($this->routes as $RoutesKey => $RoutesValue) {
-	
-	unset($splitParts);
+    unset($splitParts);
 
-	if (array_key_exists('parts', $RoutesValue)) {
+    if (isset($RoutesValue['parts'])) {
+        $routeMask = '/'.implode('/', $RoutesValue['parts']);
 
-		$routeMask = '/'.implode('/', $RoutesValue['parts']); 
+        isset($RoutesValue['optional'])
+            ? $optional = $RoutesValue['optional']
+            : $optional = 999;
 
-		array_key_exists('optional', $RoutesValue)
-		?
-		$optional = $RoutesValue['optional']
-		:
-		$optional = 999;
+        $routeParts = explode('/', ltrim($RoutesValue['path'], '/'));
 
-		$routeParts = explode('/', ltrim($RoutesValue['route'], '/'));
+        // оборачиваем в теги части маршрутов parts для parts-раздела
+        // (выделяем необязательные и обычные параметры)
+        for ($i = 0; $i < count($RoutesValue['parts']); $i++) {
 
-        	// оборачиваем в теги части маршрутов parts для parts-раздела
-        	// (выделяем необязательные и обычные параметры)
-		for ($i = 0; $i < count($RoutesValue['parts']); $i++) {
+            if ($i >= $optional) {
+                $tag = $td_optional;
+            } elseif (preg_match('/^{/', $routeParts [$i])) {
+                $tag = $td_params;
+            } else {
+                $tag = $td_text;
+            }
+            $splitParts[$i] = $tag.$RoutesValue['parts'][$i].'</td>';
+        }
+    } else {
+        // разбиваем для parts-раздела и оборачиваем в теги простые адреса без параметров
+        if ($RoutesValue['path'] == '/') {
+            $splitParts[0] = $td_text.'/</td>';
+        } else {
+            $arr = explode('/', ltrim($RoutesValue['path'], '/'));
+            foreach ($arr as $val) {
+                $splitParts[] = $td_text.$val.'</td>';
+            }
+        }
+        $routeMask = $RoutesValue['path'];
+    }
 
-			if ($i >= $optional) {
-				$tag = $td_optional;
-			}
-			elseif (preg_match('/^{/', $routeParts [$i])) {
-				$tag = $td_params;
-			}
-			else {
-				$tag = $td_text;
-			}
-			$splitParts[$i] = $tag.$RoutesValue['parts'][$i].'</td>';
-		}
-	}
-	else {
-        	// разбиваем для parts-раздела и оборачиваем в теги простые адреса без параметров 
-		if ($RoutesValue['route'] == '/') {
-			$splitParts[0] = $td_text.'/</td>';
-		}
-		else {
-			$arr = explode('/', ltrim($RoutesValue['route'], '/'));
-			foreach ($arr as $val) {
-				$splitParts[] = $td_text.$val.'</td>';
-			}
-		}
-		$routeMask = $RoutesValue['route'];
-	}
+    // добавляем в общий массив
+    $listArr[$RoutesKey]['routeMask'] = $routeMask;
+    $listArr[$RoutesKey]['splitParts'] = $splitParts;
 
-    	// добавляем в общий массив 
-	$listArr[$RoutesKey]['routeMask']  = $routeMask;
-	$listArr[$RoutesKey]['splitParts'] = $splitParts;
+    // считаем количество ячеек таблицы для parts-раздела по самому длинному маршруту
+    $cnt = count($splitParts);
+    $partsCount > $cnt ?: $partsCount = $cnt;
 
-    	// считаем количество ячеек таблицы для parts-раздела по самому длинному маршруту
-	$cnt = count($splitParts);
-	$partsCount > $cnt
-	?:
-	$partsCount = $cnt;
+    // имена маршрутов
+    if (array_key_exists('nSpace', $RoutesValue)) {
+        $listArr[$RoutesKey]['name'] = $RoutesValue['nSpace'].'/';
+    } else {
+        $listArr[$RoutesKey]['name'] = '';
+    }
+    if (isset($RoutesValue['name'])) {
+        $listArr[$RoutesKey]['name'] .= $RoutesValue['name'];
+    } else {
+        $listArr[$RoutesKey]['name'] = '';
+    }
 
-    	// имена маршрутов
-	if (array_key_exists('nSpace', $RoutesValue)) {
-		$listArr[$RoutesKey]['name'] = $RoutesValue['nSpace'].'/';
-	}
-	else {
-		$listArr[$RoutesKey]['name'] = '';
-	}
-	if (array_key_exists('name', $RoutesValue)) {
-		$listArr[$RoutesKey]['name'] .= $RoutesValue['name'];
-	}
-	else {
-		$listArr[$RoutesKey]['name'] = '';
-	}
+    // файлы маршрутов
+    if (isset($RoutesValue['file'])) {
+        $listArr[$RoutesKey]['file'] = $RoutesValue['file'];
+    } else {
+        $listArr[$RoutesKey]['file'] = '';
+    }
 
-        // файлы маршрутов
-	if (array_key_exists('file', $RoutesValue)) {
-		$listArr[$RoutesKey]['file'] = $RoutesValue['file'];
-	}
-	else {
-		$listArr[$RoutesKey]['file'] = '';
-	}
+    // имена контроллеров
+	$controller = '';
+    $different = false;
+//    \d::p($RoutesValue);
+    foreach($RoutesValue['verbs'] as $verbsKey => $verbsValue) {
+	    $next = $verbsValue['controller'];
+	    if ($controller == '') {
+            $controller = $next;
+            continue;
+        }
+        if ($controller == $next) continue;
+	    strcmp($controller, $next) < 0
+	        ? $count = strlen($controller)
+            : $count = strlen($next);
 
-		// имена контроллеров
-	if (array_key_exists('controller', $RoutesValue)) {
-		$listArr[$RoutesKey]['controller'] = $RoutesValue['controller'];
-	}
-	else {
-		$listArr[$RoutesKey]['controller'] = '';
-	}
+        $delimiter = 0;
+	    for ($i = 0; $i < $count; ++$i) {
+	        if (($controller[$i] == "\\") && $next[$i] == "\\") {
+	            $delimiter = $i + 1;
+            }
+	        if ($controller[$i] !== $next[$i]) {
+                $different = true;
+	            $controller = substr($controller, 0, $delimiter);
+	            break;
+            }
+        }
+//        \d::p($controller);
+    }
 
-		// добавляем  method action controller
-	foreach ($this->methods as $MethodsValue) {
-				   $listArr[$RoutesKey]['mac'][] = [];
-		$k = count($listArr[$RoutesKey]['mac']) - 1;
+    $listArr[$RoutesKey]['controller'] = $controller;
+    !$different ?: $listArr[$RoutesKey]['controller'] .= ' =>>';
 
-		if (array_key_exists($MethodsValue, $RoutesValue)) {
+    // добавляем  method action controller
+    foreach ($this->methods as $methodsKey => $value) {
+        $listArr[$RoutesKey]['mac'][] = [];
+        $k = count($listArr[$RoutesKey]['mac']) - 1;
 
-			$listArr[$RoutesKey]['mac'][$k][] = $MethodsValue;
-			$listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$MethodsValue]['action'];
+        if (isset($RoutesValue['verbs'][$methodsKey])) {
+            $listArr[$RoutesKey]['mac'][$k][] = $methodsKey;
+            $listArr[$RoutesKey]['mac'][$k][] = $RoutesValue['verbs'][$methodsKey]['action'];
 
-			$RoutesValue[$MethodsValue]['controller'] == $RoutesValue['controller']
-			?
-			$listArr[$RoutesKey]['mac'][$k][] = ''
-			:
-			$listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$MethodsValue]['controller'];
-		}
-		else {
-			$listArr[$RoutesKey]['mac'][$k] = ['', '', ''];
-		}
-	}
+            $listArr[$RoutesKey]['mac'][$k][]
+                = str_replace($controller, '', $RoutesValue['verbs'][$methodsKey]['controller']);
+//
+//            $RoutesValue['verbs'][$methodsKey]['controller'] == $RoutesValue['controller']
+//                ?  ''
+//                : $listArr[$RoutesKey]['mac'][$k][] = $RoutesValue[$methodsKey]['controller'];
+        } else {
+            $listArr[$RoutesKey]['mac'][$k] = ['', '', ''];
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -201,12 +197,12 @@ foreach ($this->routes as $RoutesKey => $RoutesValue) {
 		</th>
 		<?php
 		$i = 0;
-		foreach ($this->methods as $MethosdsValue): ?>
+		foreach ($this->methods as $methodsKey => $value): ?>
 			<th>
 				<div class="but_method" data-cell="
-					<?= $MethosdsValue ?>
+					<?= $methodsKey ?>
 				">
-					<?= $MethosdsValue ?>
+					<?= $methodsKey ?>
 				</div>
 			</th>
 			<th>
