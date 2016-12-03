@@ -13,7 +13,7 @@ class NotFound404
 	{
 		if ($this->Route->code !== 404) return;
 
-		if (! property_exists($this->Route, 'controller')) {
+		if (!property_exists($this->Route, 'controller')) {
 			return $this->default404();
 		}
 
@@ -47,7 +47,6 @@ class NotFound404
 				);
 			}
 		}
-
 		return $this->default404();
 	}
 
@@ -59,9 +58,7 @@ class NotFound404
 		$message[] = "There's nothing here";
 
 		ob_start();
-
 		include MICRO_ERROR_PAGE;
-
 		return
 		$this->ResponseFactory->get(
 			ob_get_clean(),

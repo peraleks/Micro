@@ -3,97 +3,84 @@
 class Autoloader
 {
     /**
-     * Пространсва имён. 
-     * 
-     * @var array
+     * @var array Пространсва имён.
      */
-    private $nameSpaceArray = [];
+    private $nameSpace = [];
 
     /**
      * Ключ - имя класса в глобальном пространстве имён
-     * Значение - ссылка на $classFile
-     * 
+     * Значение - ссылка на $classFile[]
+     *
      * @var array
      */
     private $className = [];
 
     /**
-     * Содержит полные пути файлов для $className
-     *
-     * @var array
+     * @var array Содержит полные пути файлов для $className
      */
     private $classFile = [];
 
     /**
-     * Содержит ссылку на элемент $nameSpaceArray,
+     * Содержит ссылку на элемент $nameSpace,
      * в который была произведена последняя запись пути
      * для данного пространства имён
-     * 
+     *
      * @var array
      */
     private $lastArray;
 
     /**
-     * Корневая директория приложения
-     * 
-     * @var string
+     * @var string Корневая директория приложения
      */
     private $baseDir;
 
     /**
-     * Счётчик подключеных файлов
-     * 
-     * @var integer $al
+     * @var integer Счётчик подключеных файлов
      */
-    public $al;
+    public $counter;
 
     /**
      * Регистрация автозагрузчика,
      * определение корневой директории приложения
-     * 
+     *
      * @var string $baseDir     Корневая директория приложения
      */
     public function __construct($baseDir)
     {
-        $this->al = &$GLOBALS['MICRO_LOADER'];
+        $this->counter = &$GLOBALS['MICRO_LOADER'];
         spl_autoload_register(array($this, 'microLoader'), false, true);
         $this->baseDir = $baseDir;
     }
 
     /**
-     * Добавляет в массив $nameSpaceArray пространство имён и путь
+     * Регистрирует пространство имён PSR-4
+     *
+     * Можно связать глобальное пространство с определённой папкой,
+     * если $name = '', $path = путь к папке (имена файлов
+     * должны совпадать с именами классов)
      *
      * @param  string       $name    пространство имён
      * @param  string|array $path    путь
      * @return this
      */
-    public function space($name, $path)
+    public function psr4($name, $path)
     {
+        $arrayLevel = &$this->nameSpace;
         $nameParts = explode('\\', $name);
 
-        $arrayLevel = &$this->nameSpaceArray;
-
-        foreach ($nameParts as $NamePartsValue) {
-
-            if (!array_key_exists($NamePartsValue, $arrayLevel)) {
-                $arrayLevel[$NamePartsValue] = [];
-            }
-            $arrayLevel = &$arrayLevel[$NamePartsValue];
+        foreach ($nameParts as $namePartsValue) {
+            $arrayLevel = &$arrayLevel[$namePartsValue];
         }
         $arrayLevel[0] = [];
 
         if (is_array($path)) {
-            foreach ($path as $PathValue) {
-
-                $arrayLevel[0][] .= $PathValue;
+            foreach ($path as $pathValue) {
+                $arrayLevel[0][] .= $pathValue;
             }
-        }
-        else {
+        } else {
             $arrayLevel[0][] .= $path;
         }
-
-        $arrayLevel[1] = $name;
-
+        $arrayLevel[1] = strlen($name);
         $this->lastArray = &$arrayLevel;
 
         return $this;
@@ -102,12 +89,9 @@ class Autoloader
     /**
      * Подключает файлы
      *
-     * При отсутствии ключа '2' в $arrayLevel, файл будет подключен
-     * без предварительной проверки на наличие такового.
-     * Иначе если ключ '2' есть - будет произведена проверка
-     * на наличие файла для всех путей в $arrayLevel[0].
-     * Вслучае неудачи, поиск будет произведён
-     * по цепочке лоадеров, если таковые зарегистрированы
+     * При отсутствии флага расширенного поиска ($arrayLevel[2]),
+     * файл будет подключен сразу. При наличии флага - будет произведена
+     * проверка на существование файла (нужна для цепочки лоадеров).
      *
      * @param array $arrayLevel содержит префикспространства имён
      * @param string $spaceEnd  подпространство + имя класса
@@ -116,46 +100,41 @@ class Autoloader
     private function includeFile(&$arrayLevel, $spaceEnd)
     {
         for ($i = 0; $i < count($arrayLevel[0]); ++$i) {
-
             $file = $this->baseDir.$arrayLevel[0][$i].$spaceEnd.'.php';
 
-            if (($i == (count($arrayLevel[0]) - 1)) && !array_key_exists(2, $arrayLevel)) {
+            if (($i == (count($arrayLevel[0]) - 1)) && !isset($arrayLevel[2])) {
                 include $file;
-                ++$this->al;
+                ++$this->counter;
                 return;
-            }
-            else {
-                if (file_exists($file)) {
-                    include $file;
-                    ++$this->al;
-                    return;
-                }
+
+            } elseif (file_exists($file)) {
+                include $file;
+                ++$this->counter;
+                return;
             }
         }
     }
 
     /**
-     * Добавляет в массив $className имя глобального класса
-     * и в $classFile путь к файлу
+     * Регистрирует классы в глобальном пространстве имён.
+     * В одном файле может быть несколько классов
      *
-     * @param  string $file      полный путь с расширением файла
-     * @param  string $class     имя класса
+     * @param  string $file     полный путь с расширением файла
+     * @param  array $class     имена классов
      * @return this
      */
-    public function globalClass($file, $class)
+    public function globalClass($file, array $class)
     {
         $this->classFile[$file] = $file;
-
-        foreach ($class as $ClassValue) {
-
-            $this->className[$ClassValue] = &$this->classFile[$file];
+        foreach ($class as $classValue) {
+            $this->className[$classValue] = &$this->classFile[$file];
         }
-
         return $this;
     }
 
     /**
      * Устанавливает флаг расширенного поиска
+     *
      * Вслучае неудачного поиска в директориях,
      * которые определены в элементе массива [0]
      * данного пространства имён, поиск будет произведён
@@ -166,7 +145,6 @@ class Autoloader
     public function next()
     {
         $this->lastArray[2] = '';
-
         return $this;
     }
 
@@ -184,44 +162,34 @@ class Autoloader
             $this->includeGlobalClass($classNameParts[0]);
             return;
         }
-
-        $arrayLevel = &$this->nameSpaceArray;
+        $arrayLevel = &$this->nameSpace;
 
         foreach ($classNameParts as $classNamePartsValue) {
+            if (!isset($arrayLevel[$classNamePartsValue])) break;
 
-            if (!array_key_exists($classNamePartsValue, $arrayLevel)) {
-                break;
-            }
-            else {
-                $arrayLevel = &$arrayLevel[$classNamePartsValue];
-
-                if (array_key_exists(0, $arrayLevel)) {
-
-                    $spaceEnd
-                    =
-                    str_replace('\\', '/', str_replace($arrayLevel[1], '', $nameSpace));
-
-                    $this->includeFile($arrayLevel, $spaceEnd);
-                }
+            $arrayLevel = &$arrayLevel[$classNamePartsValue];
+            if (isset($arrayLevel[0])) {
+                $spaceEnd = str_replace('\\', '/', substr($nameSpace, $arrayLevel[1]));
+                $this->includeFile($arrayLevel, $spaceEnd);
             }
         }
     }
 
     /**
-     * Подключение глобального класса.
-     * 
-     * @param  string $className  имя класса без пространства имён  
+     * Подключает глобальный класс.
+     *
+     * @param  string $class  имя класса без пространства имён
      * @return void
      */
-    private function includeGlobalClass($className)
+    private function includeGlobalClass($class)
     {
-        if (array_key_exists($className, $this->className)) {
-            ++$this->al;
-            include $this->baseDir.$this->className[$className];
+        if (isset($this->className[$class])) {
+            include $this->baseDir.$this->className[$class];
+            ++$this->counter;
             return;
         }
-        elseif (array_key_exists('', $this->nameSpaceArray)) {
-            $this->includeFile($this->nameSpaceArray[''], $className);
+        elseif (isset($this->nameSpace[''])) {
+            $this->includeFile($this->nameSpace[''], '/'.$class);
         }
     }
 }
