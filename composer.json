@@ -11,12 +11,15 @@
     ],
 
     "require": {
-        "php":">=7"
+        "php":">=7",
+        "zendframework/zend-diactoros":"dev-master",
+        "symfony/var-dumper": "^3.2"
     },
 
     "autoload": {
         "psr-4": {
-            "MicroMir\\": "Micro/"
+            "MicroMir\\": "Micro/",
+            "": "vendor/zdorovo/micro/Micro/Debug/"
         }
     }
 
