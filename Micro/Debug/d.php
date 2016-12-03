@@ -1,8 +1,14 @@
 <?php
+use Symfony\Component\VarDumper\VarDumper;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
+use MicroMir\Debug\HtmlDumper;
 
 class d
 {
 	public static $memory;
+
+	private function __construct() {}
 
 	public static function m()
 	{
@@ -32,7 +38,30 @@ class d
 	}
 
 
-	private function __construct($var) {}
+	public static function d($var)
+    {
+        VarDumper::setHandler(function ($var) {
+            $dumper = 'cli' === PHP_SAPI ? new CliDumper() : new HtmlDumper();
+            $dumper->dump((new VarCloner())->cloneVar($var));
+        });
+
+        static $int = 0;
+
+        $deb  = debug_backtrace();
+        $file = $deb[0]['file'];
+        $line = $deb[0]['line'];
+
+        echo
+            "<div style=\"".self::$s['main']."\">
+				<div style=\"".self::$s['int']."\">$int</div>
+				<div style=\"".self::$s['file']."\">$file::$line</div>
+		</div>
+		";
+
+        ++$int;
+
+        VarDumper::dump($var);
+    }
 
 	public static function p($var)
 	{
@@ -45,12 +74,12 @@ class d
 
 		$print = self::color($print, [
 
-			'[' 	=> '728e72',
-			']' 	=> '728e72',
-			'=&gt;'	=> '6a9695',
-			'(' 	=> '555',
-			')' 	=> '555',
-			'Array' => 'bf7279',
+			'[' 	=> '888',
+			']' 	=> '888',
+			'=&gt;'	=> '888',
+			'(' 	=> '888',
+			')' 	=> '888',
+			'Array' => '888',
 
 		]);
 
@@ -60,9 +89,8 @@ class d
 
 		echo 
 		"<div style=\"".self::$s['main']."\">
-				<div style=\"".self::$s['int']."\">$int</div>&nbsp
-				<div style=\"".self::$s['file']."\">$file</div>&nbsp
-				<div style=\"".self::$s['line']."\">$line</div>
+				<div style=\"".self::$s['int']."\">$int</div>
+				<div style=\"".self::$s['file']."\">$file::$line</div>
 			<pre>
 				<div style=\"".self::$s['body']."\">
 					{$print}
@@ -83,39 +111,28 @@ class d
 	}
 
 	private static $s = [
-		'main' =>  'background-color: #333;
+		'main' =>  'background-color: #232525;
 					display: inline-block;
+					box-sizing: border-box;
 					min-width: 100%;
-					padding: 15px 20px;
-					border-radius: 25px;
-					border-bottom: 1px solid #666;
-					font-family: monospace;',
+					padding: 5px;
+					border-radius: 5px 5px 0 0;
+					border-top: 1px solid #666;
+					font-size: 14px;
+					font-family: Consolas, Menlo, Monaco, monospace;',
 
 		'int'  =>  'color: #efef81; 
-				 	font-size: 1.7em;
 				 	display: inline-block;
-					border-radius: 50%;
-					background-color: #555;
 					text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 					padding: 0 0.5em;',
 
-		'body' =>  'background-color: #333;
+		'body' =>  'background-color: #232525;
 					color: #ddd;
-				    font-size: 100%;
-					font-family: Consolas, monospace;',
+					font-family: Consolas, Menlo, Monaco, monospace;',
 
-		'file' =>  'color: #00d6d2;
+		'file' =>  'color: #999;
 					display: inline-block;
-					text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.9), 0 0 2px rgb(0, 0, 0);
-					font-size: 1.4em;',
-
-		'line' =>  'color: #7ddba4;
-					text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-					display: inline-block;
-					border-radius: 50%;
-					background-color: #555;
-					padding: 0 0.5em;
-					font-size: 1.7em;',
+					text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.9), 0 0 2px rgb(0, 0, 0);',
 
 	'time_main' => 'display: inline-block;
 					position: fixed;
@@ -124,8 +141,8 @@ class d
 					opacity: 0.9;
 					border-radius: 10px;
 					padding: 5px;
-					font-family: monospace;
-					font-size: 1.2em;
+					font-family: Consolas, Menlo, Monaco, monospace;
+					font-size: 14px;
 					background-color: #fff;
 					box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.2);
 					text-align: right',
