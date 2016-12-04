@@ -243,7 +243,7 @@ class ErrorHandler
 
     private function traceHandler($trace, $file)
     {
-        $ThisClass = __CLASS__;
+        $thisClass = __CLASS__;
 
         include(__DIR__.'/trace.php');
 

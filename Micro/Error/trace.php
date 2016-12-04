@@ -111,7 +111,7 @@ for ($i = 0; $i < count($trace); ++$i) {
 #--------------- args ---------------------------------------------------------
 		$this->traceResult['log'][$i]['args'] = [];
 
-		if (empty($trace[$i]['class']) || $trace[$i]['class'] != $ThisClass) {
+		if (empty($trace[$i]['class']) || $trace[$i]['class'] != $thisClass) {
 			if (!array_key_exists('args', $trace[$i])) {
 				$trace[$i]['args'] = [];
 			}
