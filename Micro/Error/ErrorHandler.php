@@ -194,8 +194,7 @@ class ErrorHandler
             return $this;
         }
         $this->headerMessages[$array['marker']]
-        =
-        array_merge($this->headerMessagesDefault, $array);
+            = array_merge($this->headerMessagesDefault, $array);
 
         return $this;
     }
@@ -210,13 +209,11 @@ class ErrorHandler
     {
         if (defined('MICRO_DEVELOPMENT') && MICRO_DEVELOPMENT === true) return;
 
-        if (array_key_exists('MICRO_ERROR_MARKER', $GLOBALS)
-            &&
-            array_key_exists($GLOBALS['MICRO_ERROR_MARKER'], $this->headerMessages))
-        {
+        if (isset($GLOBALS['MICRO_ERROR_MARKER'])
+            && isset($this->headerMessages[$GLOBALS['MICRO_ERROR_MARKER']])
+        ) {
             $arr = $this->headerMessages[$GLOBALS['MICRO_ERROR_MARKER']];
-        }
-        else {
+        } else {
             $arr = $this->headerMessagesDefault;
         }
 
@@ -228,8 +225,7 @@ class ErrorHandler
         }
         if (defined('MICRO_ERROR_PAGE')) {
             include MICRO_ERROR_PAGE;
-        }
-        else {
+        } else {
             include(__DIR__.'/500.php');
         }
     }
