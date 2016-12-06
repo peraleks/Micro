@@ -29,6 +29,7 @@ class d
 		else {
 			$loader = $GLOBALS['MICRO_LOADER'];
 		}
+
 		echo
 		"<div title=\"$file::$line\" style=\"".self::$s['time_main']."\">
 			<b style=\"color: green; font-size: 1.2em;\">{$loader}</b> al<br>
@@ -38,61 +39,66 @@ class d
 	}
 
 
-	public static function d($var)
+    public static function d($var)
     {
         if (!defined('MICRO_DEVELOPMENT') || MICRO_DEVELOPMENT === false) return;
-
         VarDumper::setHandler(function ($var) {
             $dumper = 'cli' === PHP_SAPI ? new CliDumper() : new HtmlDumper();
             $dumper->dump((new VarCloner())->cloneVar($var));
         });
 
         static $int = 1;
-        $deb  = debug_backtrace();
+
+        $deb = debug_backtrace();
         $file = $deb[0]['file'];
         $line = $deb[0]['line'];
+
         echo
             "<div style=\"".self::$s['main']."\">
 				<div style=\"".self::$s['int']."\">$int</div>
 				<div style=\"".self::$s['file']."\">$file::$line</div>
 		</div>
 		";
+
         ++$int;
+
         VarDumper::dump($var);
     }
 
 	public static function p($var)
 	{
-        if (!defined('MICRO_DEVELOPMENT') || MICRO_DEVELOPMENT === false) return;
 		ob_start();
-		print_r($var);
-		$print = htmlentities(ob_get_contents());
-		ob_end_clean();
+		var_dump($var);
+		$print = htmlentities(ob_get_clean());
 
-        $print = self::color($print, [
-            '['     => '888',
-            ']'     => '888',
-            '=&gt;' => '888',
-            '('     => '888',
-            ')'     => '888',
-            'Array' => '888',
-        ]);
+		$print = self::color($print, [
 
+			'[' 	=> '888',
+			']' 	=> '888',
+			'=&gt;'	=> '888',
+			'(' 	=> '888',
+			')' 	=> '888',
+			'Array' => '888',
+
+		]);
 		static $int = 1;
+
 		$deb  = debug_backtrace();
 		$file = $deb[0]['file'];
 		$line = $deb[0]['line'];
+
 		echo
-		"<div style=\"".self::$s['main']."\">
+            "<div style=\"".self::$s['main']."\">
 				<div style=\"".self::$s['int']."\">$int</div>
 				<div style=\"".self::$s['file']."\">$file::$line</div>
-			<pre>
 				<div style=\"".self::$s['body']."\">
-					{$print}
+			        <pre>
+					    {$print}
+			        </pre>
 				</div>
-			</pre>
-		</div>
-		";
+            </div>
+            ";
+
 		++$int;
 	}
 

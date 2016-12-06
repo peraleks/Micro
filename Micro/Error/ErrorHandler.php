@@ -6,7 +6,7 @@ class ErrorHandler
 {
     static private $instance;
 
-    private $R; // используется в __DIR__.'/trace.php'
+    private $c; // используется в __DIR__.'/trace.php'
 
     private $headerMessages = [];
 
@@ -59,8 +59,8 @@ class ErrorHandler
         return self::$instance;
     }
 
-    public function setRoot($R) {
-        $this->R = $R;
+    public function setRoot($c) {
+        $this->c = $c;
     }
 
     public function error()

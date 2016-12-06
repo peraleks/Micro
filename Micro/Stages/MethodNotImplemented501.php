@@ -6,6 +6,7 @@ class MethodNotImplemented501
     public function __construct($R)
     {
     	$this->Verbs		   = $R->Verbs;
+//    	\d::d($this->Verbs);
         $this->ResponseFactory = $R->ResponseFactory;
     }
 

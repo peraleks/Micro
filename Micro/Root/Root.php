@@ -3,9 +3,9 @@ namespace MicroMir\Root;
 
 class Root
 {
-    private static $helpers = [];
+    private $services = [];
 
-    private static $register = [];
+    private $classLink = [];
 
     public static $instance;
 
@@ -14,63 +14,64 @@ class Root
     public static function instance()
     {
         self::$instance
-        ?:
-        self::$instance = new self;
-
+            ?: self::$instance = new self;
         return self::$instance;
     }
 
-    public function FuncToLink($funcName) {
-        if (array_key_exists($funcName, self::$helpers)) {
-            return self::$helpers[$funcName]['method'];
-        }
-    }
-
-    public function link($name = null, $content = null)
+    public function link($alias, $class, $provaider = null)
     {
-        if (!$name || !$content) {
-            new RootException(3, ['link()', 2, '([string], [Closure|Object])']);
+        if (isset($this->services[$alias])) {
+            new RootException(0, ['\' '.$alias.' \'']); // переделать
             return $this;
         }
-        if (isset(self::$register[$name])) {
-            new RootException(0, ['\' '.$name.' \'']);
+        if (isset($this->classLink[$class])) {
+            new RootException(0, ['\' '.$class.' \'']); // переделать
             return $this;
         }
-        self::$register[$name] = $content; 
-        return $this;
-    }
-
-    public function func($name = null, $content = null, $method = null)
-    {
-        if (!$name || !$content) {
-            new RootException(3, ['func()', 3, '([string], [string], [string])']);
-            return $this;
-        }
-        if (isset(self::$helpers[$name])) {
-            new RootException(0, ['\' '.$name.' \'']);
-            return $this;
-        }
-        self::$helpers[$name]['content'] = $content; 
-        self::$helpers[$name]['method'] = $method;
+        $this->services[$alias]['class'] = $class;
+        $this->services[$alias]['provaider'] = $provaider;
+        $this->classLink[$class] = &$this->services[$alias];
 
         return $this;
     }
 
     public function get($name)
     {
-        if (!isset(self::$register[$name])) {
+        if (!isset($this->services[$name])) {
             new RootException(1, [$name], 1);
             return new RootEmptyObject($name);
         }
-        if (is_callable(self::$register[$name])) {
 
-            $this->$name
-            =
-            self::$register[$name]
-            =
-            call_user_func(self::$register[$name], self::$instance);
+        if (isset($this->services[$name]['provaider'])) {
+            return $this->$name = (new $this->services[$name]['provaider'])->getService();
         }
-        return $this->$name = self::$register[$name];
+
+        $arr = [];
+        $refl = new \ReflectionClass($this->services[$name]['class']);
+//        \d::d($refl);
+
+        if ($method = $refl->getConstructor()) {
+//            \d::d($method);
+
+            $params = $method->getParameters();
+//            \d::d($params);
+
+            for ($i = 0; $i < count($params); ++$i) {
+                $paramName = $params[$i]->getName();
+
+                if ($this->hasName($paramName)) {
+                    $arr[$i] = $this->$paramName;
+                } else {
+                    $arr[$i] = null;
+                }
+            }
+        }
+//        \d::d($arr);
+//        \d::d($this);
+
+
+        return $this->$name = $refl->newInstanceArgs($arr);
+
     }
 
     public function __call($name, $args)
@@ -84,29 +85,10 @@ class Root
         return $this->get($name);
     }
 
-    public static function __callStatic($name, $args)
+    public function hasName($name)
     {
-        if (!isset(self::$helpers[$name])) {
-            new RootException(1, [$name]);
-            return null;
-        }
-        if (!isset(self::$register[self::$helpers[$name]['content']])) {
-            new RootException(4, ['::'.$name.'()', self::$helpers[$name]['content']]);
-            return;
-        }
-        $content = &self::$register[self::$helpers[$name]['content']];
-
-        if (is_callable($content)) {
-
-            $content
-            =
-            call_user_func($content, self::$instance);
-        }
-        return
-        call_user_func_array(array(
-                                    $content,
-                                    self::$helpers[$name]['method'],
-                                   ), $args);
+        if (isset($this->services[$name])) return true;
     }
+
 
 }

@@ -5,8 +5,9 @@ class Route
 {
 	private $route = [];
 
-	public function __conctruct()
+	public function __construct()
 	{
+
 	}
 
 	public function set(array $route)

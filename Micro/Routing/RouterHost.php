@@ -10,9 +10,9 @@ class RouterHost
 	private $lastRouter;
     
 
-    public function __construct($R)
+    public function __construct($Verbs)
     {
-        $this->Verbs = $R->Verbs;
+        $this->Verbs = $Verbs;
 
 		$RouterHost = $this;
 

@@ -70,11 +70,11 @@ for ($i = 0; $i < count($trace); ++$i) {
 
 			// проверка инверсии FuncToLink ...................................
 		$funcLink = '';
-		if ($trace[$i]['class'] == get_class($this->R)
+		if ($trace[$i]['class'] == get_class($this->c)
 			&&
 			$trace[$i]['function'] == '__callStatic')
 		{
-			if ($funcLink = $this->R->FuncToLink($trace[$i]['args'][0])) {
+			if ($funcLink = $this->c->FuncToLink($trace[$i]['args'][0])) {
 
 				$arr[$i]['func']
 				=
