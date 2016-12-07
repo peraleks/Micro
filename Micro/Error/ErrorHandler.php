@@ -32,7 +32,6 @@ class ErrorHandler
             E_DEPRECATED        => 'DEPRECATED',
             E_USER_DEPRECATED   => 'USER_DEPRECATED',
             3                   => 'not_caught_Exception',
-            0                   => 'Unknown_Type_Error',
         ];
         if(array_key_exists($error, $errors)){
             return $errors[$error];
@@ -47,15 +46,15 @@ class ErrorHandler
 
         register_shutdown_function([$this, 'fatalError']);
 
-        $this->headerMessagesDefault['header']  = '500 Internal Server Error';
+        $this->headerMessagesDefault['header']    = '500 Internal Server Error';
         $this->headerMessagesDefault['message'][] = 'Сервер отдыхает. Зайдите позже.';
         $this->headerMessagesDefault['message'][] = "Don't worry! Chip 'n Dale Rescue Rangers";
    }
 
     static public function instance()
     {
-        self::$instance ?: self::$instance = new self;
-        
+        self::$instance
+            ?: self::$instance = new self;
         return self::$instance;
     }
 
@@ -65,24 +64,16 @@ class ErrorHandler
 
     public function error()
     {
-        $args    = debug_backtrace()[0]['args'];
-        $code    = $args[0];
-        $name    = $this->getErrorName($code);
-        $message = $args[1];
-        $file    = $args[2];
-        $line    = $args[3];
-
-        $this->traceHandler(debug_backtrace(), $file);
+        $this->traceHandler($debug = debug_backtrace());
 
         $this->notify(
-                        $code,
-                        $name,
-                        $message,
-                        $message,
-                        $file,
-                        $line
-                     );
-
+            $debug[0]['args'][0],                       // code
+            $this->getErrorName($debug[0]['args'][0]),  // name
+            $debug[0]['args'][1],                       // message
+            $debug[0]['args'][1],                       // log message
+            $debug[0]['args'][2],                       // file
+            $debug[0]['args'][3]                        // line
+        );
         return true;
     }
 
@@ -97,87 +88,79 @@ class ErrorHandler
         if ($args instanceof \ParseError) {
             $code = 4;
             $this->sendHeaderMessage();
-        }
-        elseif ($args instanceof \Error) {
-            $code = 1; 
+
+        } elseif ($args instanceof \Error) {
+            $code = 1;
             $this->sendHeaderMessage();
-        }
-        elseif ($args instanceof \Exception && $code == 0) {
+
+        } elseif ($args instanceof \Exception && $code == 0) {
             $code = 3;
             $this->sendHeaderMessage();
         }
-
         $name = $this->getErrorName($code);
 
         $traceArr = [];
-
         $traceArr[0]['file'] = $file;
         $traceArr[0]['line'] = $line;
 
-        $trace = $args->getTrace();
-
-        foreach ($trace as $TraceValue) {
-             $traceArr[] = $TraceValue;
-        }
-        $this->traceHandler( $traceArr, $file);
+        $this->traceHandler(array_merge($traceArr, $args->getTrace()));
 
         $this->notify(
-                        $code,
-                        $name,
-                        $message,
-                        $message,
-                        $file,
-                        $line
-                     );
-
+            $code,
+            $name,
+            $message,
+            $message,
+            $file,
+            $line
+        );
         return true;
     }
 
 
-    public function microException($obj, $traceNumber = 0)
+    public function microException($obj, $traceNumber)
     {
-        $code    = $obj->getCode();
-        $name    = 'Micro_Exception';
-        $message = $obj->getMessage()['displayError'];
-        $logMess = $obj->getMessage()['logError'];
         $trace   = $obj->getTrace();
+        $message = $obj->getMessage();
 
-        if (!isset($trace[$traceNumber]['file'])) {
-            $file = $traceNumber;
-            $line = '';
-        }
-        else {
+        if (is_string($traceNumber)) {
+            $arr = explode('::', $traceNumber);
+            $file = $arr[0];
+            $line = isset($arr[1]) ? $arr[1] : '';
+            $traceNumber = 0;
+
+        } elseif (isset($trace[$traceNumber]['file'])) {
             $file = $trace[$traceNumber]['file'];
             $line = $trace[$traceNumber]['line'];
+        } else {
+            $file = '';
+            $line = '<-';
         }
-        $this->traceHandler(debug_backtrace(), $file);
+        $this->traceHandler($trace, $traceNumber);
 
         $this->notify(
-                        $code,
-                        $name,
-                        $message,
-                        $logMess,
-                        $file,
-                        $line
-                     );
+            $obj->getCode(),                    // code
+            'Micro_Exception',                  // name
+            $message['displayError'],           // message
+            $message['logError'],               // log message
+            $file,
+            $line
+        );
     }
 
     public function fatalError()
     {
         if ($error = error_get_last()) {
-
             ob_end_clean();
-
             $this->traceHandler(debug_backtrace(), $error['file']);
 
             $this->notify(
-                           $error['type'],
-                           $this->getErrorName($error['type']),
-                           $error['message'],
-                           $error['message'],
-                           $error['file'],
-                           $error['line']
-                         );
+                $error['type'],
+                $this->getErrorName($error['type']),
+                $error['message'],
+                $error['message'],
+                $error['file'],
+                $error['line']
+            );
             $this->sendHeaderMessage();
         }
     }
@@ -237,7 +220,7 @@ class ErrorHandler
     }
 
 
-    private function traceHandler($trace, $file)
+    private function traceHandler($trace, $traceNumber = 0)
     {
         $thisClass = __CLASS__;
 

@@ -7,7 +7,7 @@ $this->traceResult['inversion'] = [];
 $argsCount = 0;
 $k = 0;
 
-for ($i = 0; $i < count($trace); ++$i) {
+for ($i = $traceNumber; $i < count($trace); ++$i) {
 
 #--------------- file ---------------------------------------------------------
 	$fileSep = '/';
@@ -15,8 +15,6 @@ for ($i = 0; $i < count($trace); ++$i) {
 		$trace[$i]['file'] = '';
 		$fileSep = '';
 	}
-	if ($k || $trace[$i]['file'] == $file) {
-		++$k;
 
 		$fileParts = explode('/', $trace[$i]['file']);
 
@@ -143,12 +141,9 @@ for ($i = 0; $i < count($trace); ++$i) {
 				}
 				else {
 					if (is_string($Arg)) {
-
-						mb_strlen($Arg) > 80
-						?
-						$end = '<span class="trace_args end">...</span>'
-						:
-						$end = '';
+                        mb_strlen($Arg) > 80
+                            ? $end = '<span class="trace_args end">...</span>'
+                            : $end = '';
 
 						$Arg = htmlentities(mb_substr($Arg, 0, 80), ENT_SUBSTITUTE).$end;
 					}
@@ -168,27 +163,29 @@ for ($i = 0; $i < count($trace); ++$i) {
 			?:
 			$argsCount = $cnt;
 		}
-	}
 }
 $l = 1;
 $this->traceResult['display'] = '';
 $this->traceResult['display'] .= '<table class="micro_trace">';
-foreach ($arr as  $ArrValue) {
+foreach ($arr as  $value) {
 
-	$this->traceResult['display'] .= '<tr class="color'.($l = $l*-1).'">'
-					.$ArrValue['path']
-					.$ArrValue['line']
-					.$ArrValue['file']
-					.$ArrValue['nameSpace']
-					.$ArrValue['class']
-					.$ArrValue['function'];
+    $this->traceResult['display']
+        .= '<tr class="color'
+        .($l = $l * -1)
+        .'">'
+        .$value['path']
+        .$value['line']
+        .$value['file']
+        .$value['nameSpace']
+        .$value['class']
+        .$value['function'];
 
-	if (!array_key_exists('args', $ArrValue)) {
-		$ArrValue['args'] = [];
+	if (!array_key_exists('args', $value)) {
+        $value['args'] = [];
 	}
 	for ($k = 0; $k < $argsCount; ++$k) {
-		if (array_key_exists($k, $ArrValue['args'])) {
-			$this->traceResult['display'] .= $ArrValue['args'][$k];
+		if (array_key_exists($k, $value['args'])) {
+			$this->traceResult['display'] .= $value['args'][$k];
 		}
 		else {
 			$this->traceResult['display'] .= '<td class="trace_args"></td>';

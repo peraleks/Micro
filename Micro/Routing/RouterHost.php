@@ -1,6 +1,8 @@
 <?php
 namespace MicroMir\Routing;
 
+use MicroMir\Http\Verbs;
+
 class RouterHost
 {
 	private $routers = [];
@@ -10,9 +12,11 @@ class RouterHost
 	private $lastRouter;
     
 
-    public function __construct($Verbs)
+    public function __construct(Verbs $verbs, $Route)
     {
-        $this->Verbs = $Verbs;
+//        c()->Verb;
+
+        $this->Verbs = $verbs;
 
 		$RouterHost = $this;
 
